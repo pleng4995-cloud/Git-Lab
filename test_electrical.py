@@ -15,7 +15,7 @@ class TestDCAnalyzer(unittest.TestCase):
         self.assertAlmostEqual(result["power_w"], 0.0)
 
     def test_rejects_non_positive_resistance(self):
-        for resistance in (0, -1):
+        for resistance in (0, -5):
             with self.subTest(resistance=resistance):
                 with self.assertRaises(ValueError):
                     analyze_dc(12, resistance)

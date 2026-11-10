@@ -1,6 +1,6 @@
 import unittest
 
-from bjt_bias.bias import solve_linear_system
+from bjt_bias.bias import solve_linear_system, solve_method1, validate_inputs
 
 
 class TestLinearSolver(unittest.TestCase):
@@ -24,6 +24,45 @@ class TestLinearSolver(unittest.TestCase):
     def test_rejects_singular_matrix(self):
         with self.assertRaises(ValueError):
             solve_linear_system([[1, 1], [1, 1]], [1, 2])
+
+
+GOLDEN = dict(vcc=12.0, r1=47000.0, r2=10000.0, rc=2200.0, re=1000.0, beta=150.0, vbe=0.7)
+
+
+class TestValidation(unittest.TestCase):
+    def test_accepts_golden_inputs(self):
+        validate_inputs(**GOLDEN)
+
+    def test_rejects_non_positive_supply_and_resistors(self):
+        for field in ("vcc", "r1", "r2", "rc", "re", "beta"):
+            for bad in (0, -5):
+                with self.subTest(field=field, bad=bad):
+                    with self.assertRaises(ValueError):
+                        validate_inputs(**{**GOLDEN, field: bad})
+
+    def test_rejects_non_numbers(self):
+        for bad in ("12", None, True, float("nan"), float("inf")):
+            with self.subTest(bad=bad):
+                with self.assertRaises(ValueError):
+                    validate_inputs(**{**GOLDEN, "vcc": bad})
+
+    def test_rejects_vbe_outside_supply(self):
+        for bad in (-0.1, 12.0, 13.0):
+            with self.subTest(bad=bad):
+                with self.assertRaises(ValueError):
+                    validate_inputs(**{**GOLDEN, "vbe": bad})
+
+
+class TestMethod1(unittest.TestCase):
+    def test_golden_operating_point(self):
+        result = solve_method1(**GOLDEN)
+        self.assertAlmostEqual(result["i_b_a"], 8.8245e-6, delta=1e-9)
+        self.assertAlmostEqual(result["i_c_a"], 1.323675e-3, delta=1e-9)
+        self.assertAlmostEqual(result["i_e_a"], 1.3325e-3, delta=1e-9)
+        self.assertAlmostEqual(result["v_b_v"], 2.0325, delta=1e-6)
+        self.assertAlmostEqual(result["v_e_v"], 1.3325, delta=1e-6)
+        self.assertAlmostEqual(result["v_c_v"], 9.087915, delta=1e-6)
+        self.assertAlmostEqual(result["v_ce_v"], 7.755415, delta=1e-6)
 
 
 if __name__ == "__main__":

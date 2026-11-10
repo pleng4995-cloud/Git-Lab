@@ -1,5 +1,7 @@
 """DC bias engineering logic for a BJT common-emitter amplifier."""
 
+import math
+
 
 def solve_linear_system(a, b):
     """Solve ``a . x = b`` with Gaussian elimination and partial pivoting.
@@ -44,3 +46,58 @@ def solve_linear_system(a, b):
         )
         solution[row] = (rhs[row] - remainder) / matrix[row][row]
     return solution
+
+
+def _finite_number(value, name):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{name} must be a number.")
+    try:
+        number = float(value)
+    except OverflowError as error:
+        raise ValueError(f"{name} must be finite.") from error
+    if not math.isfinite(number):
+        raise ValueError(f"{name} must be finite.")
+    return number
+
+
+def _positive_number(value, name):
+    number = _finite_number(value, name)
+    if number <= 0:
+        raise ValueError(f"{name} must be a finite number greater than zero.")
+    return number
+
+
+def validate_inputs(vcc, r1, r2, rc, re, beta, vbe):
+    """Validate the seven bias inputs, raising ``ValueError`` when invalid."""
+    vcc = _positive_number(vcc, "VCC")
+    _positive_number(r1, "R1")
+    _positive_number(r2, "R2")
+    _positive_number(rc, "RC")
+    _positive_number(re, "RE")
+    _positive_number(beta, "beta")
+    vbe = _finite_number(vbe, "VBE")
+    if vbe < 0 or vbe >= vcc:
+        raise ValueError("VBE must be between 0 and VCC.")
+
+
+def solve_method1(vcc, r1, r2, rc, re, beta, vbe):
+    """Solve the bias point with the standard Thevenin divider method.
+
+    Assumes the inputs were already validated; returns SI-unit values.
+    """
+    vbb = vcc * r2 / (r1 + r2)
+    r_b = r1 * r2 / (r1 + r2)
+    i_b = (vbb - vbe) / (r_b + (beta + 1) * re)
+    i_c = beta * i_b
+    i_e = (beta + 1) * i_b
+    v_e = i_e * re
+    v_c = vcc - i_c * rc
+    return {
+        "i_b_a": i_b,
+        "i_c_a": i_c,
+        "i_e_a": i_e,
+        "v_b_v": v_e + vbe,
+        "v_e_v": v_e,
+        "v_c_v": v_c,
+        "v_ce_v": v_c - v_e,
+    }

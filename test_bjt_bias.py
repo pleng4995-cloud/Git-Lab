@@ -1,6 +1,12 @@
 import unittest
 
-from bjt_bias.bias import solve_linear_system, solve_method1, validate_inputs
+from bjt_bias.bias import (
+    max_normalized_difference,
+    solve_linear_system,
+    solve_method1,
+    solve_method2,
+    validate_inputs,
+)
 
 
 class TestLinearSolver(unittest.TestCase):
@@ -63,6 +69,40 @@ class TestMethod1(unittest.TestCase):
         self.assertAlmostEqual(result["v_e_v"], 1.3325, delta=1e-6)
         self.assertAlmostEqual(result["v_c_v"], 9.087915, delta=1e-6)
         self.assertAlmostEqual(result["v_ce_v"], 7.755415, delta=1e-6)
+
+
+SATURATING = dict(vcc=12.0, r1=47000.0, r2=10000.0, rc=10000.0, re=100.0, beta=150.0, vbe=0.7)
+CUTOFF = dict(vcc=12.0, r1=47000.0, r2=2200.0, rc=2200.0, re=1000.0, beta=150.0, vbe=0.7)
+
+
+class TestMethod2(unittest.TestCase):
+    def test_agrees_with_method1_on_golden(self):
+        diff = max_normalized_difference(solve_method1(**GOLDEN), solve_method2(**GOLDEN))
+        self.assertLess(diff, 1e-6)
+
+    def test_agrees_with_method1_on_saturation_case(self):
+        diff = max_normalized_difference(solve_method1(**SATURATING), solve_method2(**SATURATING))
+        self.assertLess(diff, 1e-6)
+
+    def test_agrees_with_method1_on_cutoff_case(self):
+        diff = max_normalized_difference(solve_method1(**CUTOFF), solve_method2(**CUTOFF))
+        self.assertLess(diff, 1e-6)
+
+    def test_does_not_use_divider_helpers(self):
+        import inspect
+
+        source = inspect.getsource(solve_method2)
+        self.assertNotIn("vbb", source.lower())
+        self.assertNotIn("r_b", source.lower())
+
+
+class TestAgreementRule(unittest.TestCase):
+    def test_zero_against_zero_is_agreement(self):
+        zeros = {"i_b_a": 0.0, "i_c_a": 0.0}
+        self.assertEqual(max_normalized_difference(zeros, dict(zeros)), 0.0)
+
+    def test_zero_against_non_zero_does_not_divide_by_zero(self):
+        self.assertEqual(max_normalized_difference({"i_b_a": 0.0}, {"i_b_a": 1e-12}), 1e-12)
 
 
 if __name__ == "__main__":

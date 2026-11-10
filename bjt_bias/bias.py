@@ -101,3 +101,57 @@ def solve_method1(vcc, r1, r2, rc, re, beta, vbe):
         "v_c_v": v_c,
         "v_ce_v": v_c - v_e,
     }
+
+
+OPERATING_POINT_FIELDS = (
+    ("i_b_a", "I_B", "µA", 1e6),
+    ("i_c_a", "I_C", "mA", 1e3),
+    ("i_e_a", "I_E", "mA", 1e3),
+    ("v_b_v", "V_B", "V", 1.0),
+    ("v_e_v", "V_E", "V", 1.0),
+    ("v_c_v", "V_C", "V", 1.0),
+    ("v_ce_v", "V_CE", "V", 1.0),
+)
+
+
+def solve_method2(vcc, r1, r2, rc, re, beta, vbe):
+    """Solve the bias point by nodal analysis (KCL) and linear algebra.
+
+    Independent of the divider reduction: the three node equations plus the
+    device constraints are solved as one linear system. Assumes the inputs
+    were already validated; returns SI-unit values.
+    """
+    matrix = [
+        [1 / r1 + 1 / r2, 0.0, 0.0, 1.0, 0.0, 0.0],
+        [0.0, 1 / rc, 0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, -1 / re, 0.0, 0.0, 1.0],
+        [0.0, 0.0, 0.0, -1.0, -1.0, 1.0],
+        [0.0, 0.0, 0.0, -beta, 1.0, 0.0],
+        [1.0, 0.0, -1.0, 0.0, 0.0, 0.0],
+    ]
+    rhs = [vcc / r1, vcc / rc, 0.0, 0.0, 0.0, vbe]
+    v_b, v_c, v_e, i_b, i_c, i_e = solve_linear_system(matrix, rhs)
+    return {
+        "i_b_a": i_b,
+        "i_c_a": i_c,
+        "i_e_a": i_e,
+        "v_b_v": v_b,
+        "v_e_v": v_e,
+        "v_c_v": v_c,
+        "v_ce_v": v_c - v_e,
+    }
+
+
+def max_normalized_difference(left, right):
+    """Largest normalized difference between two operating points.
+
+    Uses ``|a - b| / max(1, |a|, |b|)`` so values near zero cannot divide by
+    zero, and returns ``0.0`` when the two agree or carry no shared keys.
+    """
+    difference = 0.0
+    for key, _symbol, _unit, _scale in OPERATING_POINT_FIELDS:
+        if key not in left or key not in right:
+            continue
+        denominator = max(1.0, abs(left[key]), abs(right[key]))
+        difference = max(difference, abs(left[key] - right[key]) / denominator)
+    return difference

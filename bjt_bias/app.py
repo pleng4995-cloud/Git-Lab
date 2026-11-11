@@ -2,7 +2,7 @@
 
 from flask import Flask, render_template, request
 
-from bjt_bias.bias import OPERATING_POINT_FIELDS, analyze_bias
+from bjt_bias.bias import OPERATING_POINT_FIELDS, VCE_SAT_V, analyze_bias
 
 RESISTOR_UNITS = (("Ω", "ohm"), ("kΩ", "kohm"), ("MΩ", "mohm"))
 VOLT_UNITS = (("V", "v"),)
@@ -227,6 +227,21 @@ def _read_form(form):
     return values, units, parsed, errors
 
 
+def page_context(fields, errors, result, parsed):
+    """Build the template context shared by the GET and POST responses."""
+    return {
+        "fields": fields,
+        "errors": errors,
+        "result": result,
+        "op_fields": OPERATING_POINT_FIELDS,
+        "result_fields": ordered_operating_point_fields(),
+        "circuit": circuit_labels(parsed),
+        "vce_sat": VCE_SAT_V,
+        "symbol_html": format_symbol,
+        "fmt": format_value,
+    }
+
+
 def create_app():
     """Build the Flask application."""
     app = Flask(__name__)
@@ -238,11 +253,7 @@ def create_app():
             units = {spec["name"]: spec["default_unit"] for spec in FIELDS}
             return render_template(
                 "index.html",
-                fields=_form_fields(values, units),
-                errors=[],
-                result=None,
-                op_fields=OPERATING_POINT_FIELDS,
-                fmt=format_value,
+                **page_context(_form_fields(values, units), [], None, DEFAULT_INPUTS),
             )
 
         values, units, parsed, errors = _read_form(request.form)
@@ -254,11 +265,7 @@ def create_app():
                 errors.append(str(error))
         return render_template(
             "index.html",
-            fields=_form_fields(values, units),
-            errors=errors,
-            result=result,
-            op_fields=OPERATING_POINT_FIELDS,
-            fmt=format_value,
+            **page_context(_form_fields(values, units), errors, result, parsed),
         )
 
     return app

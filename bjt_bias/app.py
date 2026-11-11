@@ -121,6 +121,65 @@ def format_value(value, scale):
     return f"{value * scale:.3f}"
 
 
+RESULT_ORDER = ("v_b_v", "v_e_v", "v_c_v", "v_ce_v", "i_b_a", "i_c_a", "i_e_a")
+
+
+def ordered_operating_point_fields():
+    """Return the operating-point fields in the lab's display order."""
+    by_key = {field[0]: field for field in OPERATING_POINT_FIELDS}
+    return tuple(by_key[key] for key in RESULT_ORDER)
+
+
+def trim_number(number):
+    """Format with up to three decimals and no trailing zeros."""
+    text = f"{number:.3f}".rstrip("0").rstrip(".")
+    return "0" if text in ("", "-0") else text
+
+
+def format_ohms(value):
+    """Format a resistance in ohms, auto-scaling to kΩ or MΩ."""
+    if abs(value) >= 1e6:
+        return f"{trim_number(value / 1e6)} MΩ"
+    if abs(value) >= 1e3:
+        return f"{trim_number(value / 1e3)} kΩ"
+    return f"{trim_number(value)} Ω"
+
+
+def format_volts(value):
+    """Format a voltage in volts."""
+    return f"{trim_number(value)} V"
+
+
+def format_symbol(symbol):
+    """Render ``V_CE`` as ``V<sub>CE</sub>``."""
+    head, _, tail = symbol.partition("_")
+    return f"{head}<sub>{tail}</sub>"
+
+
+def _default_value(spec):
+    if spec["name"] in RESISTANCE_FIELDS:
+        value = parse_resistance(spec["default_value"], spec["label"])
+    else:
+        value = parse_number(spec["default_value"], spec["label"])
+    return value * unit_multiplier(spec["default_unit"])
+
+
+DEFAULT_INPUTS = {spec["name"]: _default_value(spec) for spec in FIELDS}
+
+
+def circuit_labels(parsed):
+    """Labels for the schematic, from the submitted values (defaults fill gaps)."""
+    inputs = {**DEFAULT_INPUTS, **parsed}
+    return {
+        "vcc": format_volts(inputs["vcc"]),
+        "r1": format_ohms(inputs["r1"]),
+        "r2": format_ohms(inputs["r2"]),
+        "rc": format_ohms(inputs["rc"]),
+        "re": format_ohms(inputs["re"]),
+        "beta": trim_number(inputs["beta"]),
+    }
+
+
 def _form_fields(values, units):
     return [
         {

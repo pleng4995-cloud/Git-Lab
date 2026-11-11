@@ -3,8 +3,13 @@ import unittest
 from flask import render_template
 
 from bjt_bias.app import (
+    circuit_labels,
     create_app,
+    format_ohms,
+    format_symbol,
     format_value,
+    format_volts,
+    ordered_operating_point_fields,
     parse_resistance,
     unit_multiplier,
 )
@@ -172,6 +177,38 @@ class TestFieldMetadata(unittest.TestCase):
         for value in ('value="12"', 'value="100"', 'value="22"',
                       'value="2.2"', 'value="1"', 'value="100"', 'value="0.7"'):
             self.assertIn(value, body)
+
+
+class TestDisplayHelpers(unittest.TestCase):
+    def test_result_order_starts_with_voltages(self):
+        keys = [field[0] for field in ordered_operating_point_fields()]
+        self.assertEqual(
+            keys,
+            ["v_b_v", "v_e_v", "v_c_v", "v_ce_v", "i_b_a", "i_c_a", "i_e_a"],
+        )
+
+    def test_ohms_auto_scales(self):
+        self.assertEqual(format_ohms(470), "470 Ω")
+        self.assertEqual(format_ohms(2_200), "2.2 kΩ")
+        self.assertEqual(format_ohms(100_000), "100 kΩ")
+        self.assertEqual(format_ohms(1e6), "1 MΩ")
+
+    def test_volts_trim_trailing_zeros(self):
+        self.assertEqual(format_volts(12), "12 V")
+        self.assertEqual(format_volts(0.7), "0.7 V")
+
+    def test_symbol_renders_subscript(self):
+        self.assertEqual(format_symbol("V_CE"), "V<sub>CE</sub>")
+        self.assertEqual(format_symbol("I_B"), "I<sub>B</sub>")
+
+    def test_circuit_labels_use_lab_defaults(self):
+        labels = circuit_labels({})
+        self.assertEqual(labels["vcc"], "12 V")
+        self.assertEqual(labels["r1"], "100 kΩ")
+        self.assertEqual(labels["r2"], "22 kΩ")
+        self.assertEqual(labels["rc"], "2.2 kΩ")
+        self.assertEqual(labels["re"], "1 kΩ")
+        self.assertEqual(labels["beta"], "100")
 
 
 if __name__ == "__main__":

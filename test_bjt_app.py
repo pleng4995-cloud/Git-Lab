@@ -2,7 +2,12 @@ import unittest
 
 from flask import render_template
 
-from bjt_bias.app import create_app, format_value, parse_resistance
+from bjt_bias.app import (
+    create_app,
+    format_value,
+    parse_resistance,
+    unit_multiplier,
+)
 from bjt_bias.bias import OPERATING_POINT_FIELDS
 
 VALID_FORM = {
@@ -120,6 +125,29 @@ class TestVerificationRendering(unittest.TestCase):
         # 1e-6 A must read as 1.00e+00 in the I_B row's µA unit, not 1.00e-06.
         self.assertIn("1.00e+00", html)
         self.assertNotIn("1.00e-06", html)
+
+
+class TestUnits(unittest.TestCase):
+    def test_unit_multiplier_known_and_unknown_keys(self):
+        self.assertEqual(unit_multiplier(""), 1.0)
+        self.assertEqual(unit_multiplier("ohm"), 1.0)
+        self.assertEqual(unit_multiplier("kohm"), 1e3)
+        self.assertEqual(unit_multiplier("mohm"), 1e6)
+        self.assertEqual(unit_multiplier("v"), 1.0)
+        self.assertEqual(unit_multiplier("none"), 1.0)
+        self.assertEqual(unit_multiplier("xyz"), 1.0)
+
+    def test_route_applies_unit_selector(self):
+        client = create_app().test_client()
+        with_unit = client.post("/", data={**VALID_FORM, "r1": "47", "r1_unit": "kohm"})
+        self.assertIn("1.324", with_unit.get_data(as_text=True))
+
+    def test_route_rejects_suffix_plus_unit_selector(self):
+        client = create_app().test_client()
+        response = client.post("/", data={**VALID_FORM, "r1": "47k", "r1_unit": "kohm"})
+        body = response.get_data(as_text=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("not both", body)
 
 
 if __name__ == "__main__":

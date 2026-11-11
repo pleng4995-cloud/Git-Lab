@@ -18,6 +18,20 @@ RESISTANCE_FIELDS = ("r1", "r2", "rc", "re")
 
 MULTIPLIERS = {"k": 1e3, "K": 1e3, "M": 1e6}
 
+UNIT_MULTIPLIERS = {
+    "": 1.0,
+    "ohm": 1.0,
+    "kohm": 1e3,
+    "mohm": 1e6,
+    "v": 1.0,
+    "none": 1.0,
+}
+
+
+def unit_multiplier(unit):
+    """Return the multiplier for a unit key; unknown or absent keys mean base units."""
+    return UNIT_MULTIPLIERS.get((unit or "").strip().lower(), 1.0)
+
 
 def parse_resistance(text, label):
     """Parse a resistance in ohms, allowing a ``k`` or ``M`` suffix."""
@@ -66,11 +80,22 @@ def _read_form(form):
     for name, label, _unit, _default in FIELDS:
         raw = form.get(name, "")
         values[name] = raw
+        multiplier = unit_multiplier(form.get(f"{name}_unit", ""))
+        if (
+            name in RESISTANCE_FIELDS
+            and multiplier != 1.0
+            and (raw or "").strip()
+            and (raw or "").strip()[-1] in MULTIPLIERS
+        ):
+            errors.append(
+                f"{label}: use either a unit selector or a k/M suffix, not both."
+            )
+            continue
         try:
             if name in RESISTANCE_FIELDS:
-                parsed[name] = parse_resistance(raw, label)
+                parsed[name] = parse_resistance(raw, label) * multiplier
             else:
-                parsed[name] = parse_number(raw, label)
+                parsed[name] = parse_number(raw, label) * multiplier
         except ValueError as error:
             errors.append(str(error))
     return values, parsed, errors

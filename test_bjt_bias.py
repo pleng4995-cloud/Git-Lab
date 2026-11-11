@@ -1,6 +1,8 @@
 import unittest
 
 from bjt_bias.bias import (
+    analyze_bias,
+    cutoff_operating_point,
     max_normalized_difference,
     solve_linear_system,
     solve_method1,
@@ -103,6 +105,52 @@ class TestAgreementRule(unittest.TestCase):
 
     def test_zero_against_non_zero_does_not_divide_by_zero(self):
         self.assertEqual(max_normalized_difference({"i_b_a": 0.0}, {"i_b_a": 1e-12}), 1e-12)
+
+
+class TestRegions(unittest.TestCase):
+    def test_golden_case_is_active(self):
+        result = analyze_bias(**GOLDEN)
+        self.assertEqual(result["region"], "active")
+        self.assertEqual(result["warnings"], [])
+        self.assertTrue(result["verification"]["agrees"])
+        self.assertAlmostEqual(result["operating_point"]["v_ce_v"], 7.755415, delta=1e-6)
+
+    def test_cutoff_reports_physical_values(self):
+        result = analyze_bias(**CUTOFF)
+        self.assertEqual(result["region"], "cutoff")
+        self.assertEqual(result["operating_point"]["i_c_a"], 0.0)
+        self.assertEqual(result["operating_point"]["v_c_v"], 12.0)
+        self.assertEqual(result["operating_point"]["v_ce_v"], 12.0)
+        self.assertAlmostEqual(result["operating_point"]["v_b_v"], 12 * 2200 / 49200, delta=1e-9)
+        self.assertTrue(any("cutoff" in w.lower() for w in result["warnings"]))
+
+    def test_saturation_warns_and_keeps_linear_values(self):
+        result = analyze_bias(**SATURATING)
+        self.assertEqual(result["region"], "saturation")
+        self.assertLess(result["operating_point"]["v_ce_v"], 0.2)
+        self.assertTrue(any("saturation" in w.lower() for w in result["warnings"]))
+
+    def test_vbe_outside_plausible_range_warns_but_computes(self):
+        result = analyze_bias(**{**GOLDEN, "vbe": 0.95})
+        self.assertEqual(result["region"], "active")
+        self.assertTrue(any("0.5" in w and "0.9" in w for w in result["warnings"]))
+
+    def test_extreme_but_valid_magnitudes_do_not_raise(self):
+        result = analyze_bias(**{**GOLDEN, "rc": 1e12, "re": 1e-6, "beta": 1e9})
+        self.assertIn(result["region"], {"active", "cutoff", "saturation"})
+        self.assertTrue(result["verification"]["agrees"])
+
+    def test_vbb_equal_to_vbe_does_not_divide_by_zero(self):
+        result = analyze_bias(vcc=12.0, r1=113000.0, r2=7000.0, rc=2200.0, re=1000.0, beta=150.0, vbe=0.7)
+        self.assertIn(result["region"], {"cutoff", "active"})
+
+
+class TestCutoffOperatingPoint(unittest.TestCase):
+    def test_cutoff_has_no_current(self):
+        point = cutoff_operating_point(12.0, 47000.0, 2200.0)
+        self.assertEqual(point["i_b_a"], 0.0)
+        self.assertEqual(point["i_e_a"], 0.0)
+        self.assertEqual(point["v_e_v"], 0.0)
 
 
 if __name__ == "__main__":

@@ -2,6 +2,10 @@
 
 import math
 
+VCE_SAT_V = 0.2
+AGREEMENT_TOLERANCE = 1e-6
+VBE_PLAUSIBLE_RANGE_V = (0.5, 0.9)
+
 
 def solve_linear_system(a, b):
     """Solve ``a . x = b`` with Gaussian elimination and partial pivoting.
@@ -155,3 +159,80 @@ def max_normalized_difference(left, right):
         denominator = max(1.0, abs(left[key]), abs(right[key]))
         difference = max(difference, abs(left[key] - right[key]) / denominator)
     return difference
+
+
+def cutoff_operating_point(vcc, r1, r2):
+    """Physical operating point with the transistor fully off."""
+    return {
+        "i_b_a": 0.0,
+        "i_c_a": 0.0,
+        "i_e_a": 0.0,
+        "v_b_v": vcc * r2 / (r1 + r2),
+        "v_e_v": 0.0,
+        "v_c_v": vcc,
+        "v_ce_v": vcc,
+    }
+
+
+def classify_region(operating_point, vcc, r1, r2):
+    """Return ``(region, warnings)`` for a linear-solution operating point."""
+    if operating_point["i_b_a"] <= 0:
+        return "cutoff", [
+            "Transistor is in cutoff (I_B <= 0): no collector current flows."
+        ]
+    if operating_point["v_ce_v"] < VCE_SAT_V:
+        return "saturation", [
+            "Transistor is in saturation (V_CE < 0.2 V): "
+            "active-mode equations are not valid."
+        ]
+    return "active", []
+
+
+def analyze_bias(vcc, r1, r2, rc, re, beta, vbe):
+    """Validate the inputs and return the full bias analysis."""
+    validate_inputs(vcc, r1, r2, rc, re, beta, vbe)
+    vcc, r1, r2, rc, re, beta, vbe = (
+        float(vcc),
+        float(r1),
+        float(r2),
+        float(rc),
+        float(re),
+        float(beta),
+        float(vbe),
+    )
+
+    method1 = solve_method1(vcc, r1, r2, rc, re, beta, vbe)
+    method2 = solve_method2(vcc, r1, r2, rc, re, beta, vbe)
+
+    region, warnings = classify_region(method1, vcc, r1, r2)
+    operating_point = (
+        cutoff_operating_point(vcc, r1, r2) if region == "cutoff" else dict(method1)
+    )
+
+    low, high = VBE_PLAUSIBLE_RANGE_V
+    if vbe < low or vbe > high:
+        warnings.insert(
+            0,
+            f"VBE = {vbe} V is outside the typical silicon range "
+            f"{low}-{high} V.",
+        )
+
+    difference = max_normalized_difference(method1, method2)
+    agrees = difference <= AGREEMENT_TOLERANCE
+    if not agrees:
+        warnings.append(
+            "Method 1 and Method 2 disagree "
+            f"(normalized difference {difference:.3e})."
+        )
+
+    return {
+        "operating_point": operating_point,
+        "region": region,
+        "warnings": warnings,
+        "verification": {
+            "method1": method1,
+            "method2": method2,
+            "max_difference": difference,
+            "agrees": agrees,
+        },
+    }

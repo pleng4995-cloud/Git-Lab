@@ -20,9 +20,16 @@
     <div class="grid">
       {% for f in fields %}
       <label>
-        <span>{{ f.label }}{% if f.unit %} ({{ f.unit }}){% endif %}</span>
-        <input type="text" name="{{ f.name }}" value="{{ f.value }}"
-               inputmode="decimal" autocomplete="off">
+        <span>{{ f.display|safe }} ({{ f.description }})</span>
+        <span class="value-row">
+          <input type="text" name="{{ f.name }}" value="{{ f.value }}"
+                 inputmode="decimal" autocomplete="off">
+          <select name="{{ f.name }}_unit">
+            {% for unit_label, unit_key in f.units %}
+            <option value="{{ unit_key }}"{% if unit_key == f.selected_unit %} selected{% endif %}>{{ unit_label }}</option>
+            {% endfor %}
+          </select>
+        </span>
       </label>
       {% endfor %}
     </div>

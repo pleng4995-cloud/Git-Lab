@@ -150,5 +150,29 @@ class TestUnits(unittest.TestCase):
         self.assertIn("not both", body)
 
 
+class TestFieldMetadata(unittest.TestCase):
+    def setUp(self):
+        self.client = create_app().test_client()
+
+    def test_get_renders_unit_selector_with_kilo_ohm_default(self):
+        body = self.client.get("/").get_data(as_text=True)
+        self.assertIn('name="r1_unit"', body)
+        self.assertIn('<option value="kohm" selected>', body)
+        for label in ("Ω", "kΩ", "MΩ"):
+            self.assertIn(label, body)
+
+    def test_post_echoes_selected_unit(self):
+        body = self.client.post(
+            "/", data={**VALID_FORM, "r1": "100", "r1_unit": "mohm"}
+        ).get_data(as_text=True)
+        self.assertIn('<option value="mohm" selected>', body)
+
+    def test_defaults_match_lab_example(self):
+        body = self.client.get("/").get_data(as_text=True)
+        for value in ('value="12"', 'value="100"', 'value="22"',
+                      'value="2.2"', 'value="1"', 'value="100"', 'value="0.7"'):
+            self.assertIn(value, body)
+
+
 if __name__ == "__main__":
     unittest.main()

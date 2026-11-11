@@ -4,14 +4,74 @@ from flask import Flask, render_template, request
 
 from bjt_bias.bias import OPERATING_POINT_FIELDS, analyze_bias
 
+RESISTOR_UNITS = (("Ω", "ohm"), ("kΩ", "kohm"), ("MΩ", "mohm"))
+VOLT_UNITS = (("V", "v"),)
+GAIN_UNITS = (("–", "none"),)
+
 FIELDS = (
-    ("vcc", "VCC", "V", "12"),
-    ("r1", "R1", "Ω", "47k"),
-    ("r2", "R2", "Ω", "10k"),
-    ("rc", "RC", "Ω", "2.2k"),
-    ("re", "RE", "Ω", "1k"),
-    ("beta", "beta", "", "150"),
-    ("vbe", "VBE", "V", "0.7"),
+    {
+        "name": "vcc",
+        "label": "VCC",
+        "display": "V<sub>CC</sub>",
+        "description": "Supply Voltage",
+        "units": VOLT_UNITS,
+        "default_value": "12",
+        "default_unit": "v",
+    },
+    {
+        "name": "r1",
+        "label": "R1",
+        "display": "R<sub>1</sub>",
+        "description": "Upper Divider",
+        "units": RESISTOR_UNITS,
+        "default_value": "100",
+        "default_unit": "kohm",
+    },
+    {
+        "name": "r2",
+        "label": "R2",
+        "display": "R<sub>2</sub>",
+        "description": "Lower Divider",
+        "units": RESISTOR_UNITS,
+        "default_value": "22",
+        "default_unit": "kohm",
+    },
+    {
+        "name": "rc",
+        "label": "RC",
+        "display": "R<sub>C</sub>",
+        "description": "Collector Resistor",
+        "units": RESISTOR_UNITS,
+        "default_value": "2.2",
+        "default_unit": "kohm",
+    },
+    {
+        "name": "re",
+        "label": "RE",
+        "display": "R<sub>E</sub>",
+        "description": "Emitter Resistor",
+        "units": RESISTOR_UNITS,
+        "default_value": "1",
+        "default_unit": "kohm",
+    },
+    {
+        "name": "beta",
+        "label": "beta",
+        "display": "β",
+        "description": "Current Gain",
+        "units": GAIN_UNITS,
+        "default_value": "100",
+        "default_unit": "none",
+    },
+    {
+        "name": "vbe",
+        "label": "VBE",
+        "display": "V<sub>BE</sub>",
+        "description": "Base–Emitter Voltage",
+        "units": VOLT_UNITS,
+        "default_value": "0.7",
+        "default_unit": "v",
+    },
 )
 
 RESISTANCE_FIELDS = ("r1", "r2", "rc", "re")
@@ -61,25 +121,32 @@ def format_value(value, scale):
     return f"{value * scale:.3f}"
 
 
-def _form_fields(values):
+def _form_fields(values, units):
     return [
         {
-            "name": name,
-            "label": label,
-            "unit": unit,
-            "value": values.get(name, default),
+            "name": spec["name"],
+            "label": spec["label"],
+            "display": spec["display"],
+            "description": spec["description"],
+            "units": spec["units"],
+            "selected_unit": units.get(spec["name"], ""),
+            "value": values.get(spec["name"], spec["default_value"]),
         }
-        for name, label, unit, default in FIELDS
+        for spec in FIELDS
     ]
 
 
 def _read_form(form):
     values = {}
+    units = {}
     parsed = {}
     errors = []
-    for name, label, _unit, _default in FIELDS:
+    for spec in FIELDS:
+        name = spec["name"]
+        label = spec["label"]
         raw = form.get(name, "")
         values[name] = raw
+        units[name] = form.get(f"{name}_unit", "")
         multiplier = unit_multiplier(form.get(f"{name}_unit", ""))
         if (
             name in RESISTANCE_FIELDS
@@ -98,7 +165,7 @@ def _read_form(form):
                 parsed[name] = parse_number(raw, label) * multiplier
         except ValueError as error:
             errors.append(str(error))
-    return values, parsed, errors
+    return values, units, parsed, errors
 
 
 def create_app():
@@ -108,17 +175,18 @@ def create_app():
     @app.route("/", methods=["GET", "POST"])
     def index():
         if request.method == "GET":
-            values = {name: default for name, _l, _u, default in FIELDS}
+            values = {spec["name"]: spec["default_value"] for spec in FIELDS}
+            units = {spec["name"]: spec["default_unit"] for spec in FIELDS}
             return render_template(
                 "index.html",
-                fields=_form_fields(values),
+                fields=_form_fields(values, units),
                 errors=[],
                 result=None,
                 op_fields=OPERATING_POINT_FIELDS,
                 fmt=format_value,
             )
 
-        values, parsed, errors = _read_form(request.form)
+        values, units, parsed, errors = _read_form(request.form)
         result = None
         if not errors:
             try:
@@ -127,7 +195,7 @@ def create_app():
                 errors.append(str(error))
         return render_template(
             "index.html",
-            fields=_form_fields(values),
+            fields=_form_fields(values, units),
             errors=errors,
             result=result,
             op_fields=OPERATING_POINT_FIELDS,

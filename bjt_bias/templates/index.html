@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BJT Common-Emitter DC Bias</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main>
+  <header>
+    <h1>BJT Common-Emitter DC Bias</h1>
+    <p class="subtitle">
+      Voltage-divider bias &mdash; DC operating point with an independent
+      nodal-analysis check.
+    </p>
+  </header>
+
+  <form method="post">
+    <div class="grid">
+      {% for f in fields %}
+      <label>
+        <span>{{ f.label }}{% if f.unit %} ({{ f.unit }}){% endif %}</span>
+        <input type="text" name="{{ f.name }}" value="{{ f.value }}"
+               inputmode="decimal" autocomplete="off">
+      </label>
+      {% endfor %}
+    </div>
+    <button type="submit">Calculate</button>
+  </form>
+
+  {% if errors %}
+  <section class="errors" role="alert">
+    <h2>Invalid input</h2>
+    <ul>
+      {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if result %}
+  <section class="region">
+    <span class="badge badge-{{ result.region }}">{{ result.region }}</span>
+  </section>
+
+  <section>
+    <h2>Operating point</h2>
+    <table>
+      <thead>
+        <tr><th>Quantity</th><th>Value</th></tr>
+      </thead>
+      <tbody>
+        {% for key, symbol, unit, scale in op_fields %}
+        <tr>
+          <td>{{ symbol }}</td>
+          <td>{{ fmt(result.operating_point[key], scale) }} {{ unit }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Verification</h2>
+    <p class="muted">
+      Method 1: Thevenin divider reduction. Method 2: independent nodal
+      analysis solved as a linear system.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Quantity</th><th>Method 1</th><th>Method 2</th><th>Difference</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for key, symbol, unit, scale in op_fields %}
+        <tr>
+          <td>{{ symbol }}</td>
+          <td>{{ fmt(result.verification.method1[key], scale) }} {{ unit }}</td>
+          <td>{{ fmt(result.verification.method2[key], scale) }} {{ unit }}</td>
+          <td>{{ "%.2e"|format(result.verification.method1[key] - result.verification.method2[key]) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="agreement {{ 'ok' if result.verification.agrees else 'bad' }}">
+      Max normalized difference
+      {{ "%.2e"|format(result.verification.max_difference) }} &mdash;
+      {{ "PASS" if result.verification.agrees else "FAIL" }}
+    </p>
+  </section>
+
+  {% if result.warnings %}
+  <section class="warnings">
+    <h2>Warnings</h2>
+    <ul>
+      {% for warning in result.warnings %}<li>{{ warning }}</li>{% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+  {% endif %}
+</main>
+</body>
+</html>

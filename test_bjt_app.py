@@ -1,6 +1,9 @@
 import unittest
 
+from flask import render_template
+
 from bjt_bias.app import create_app, format_value, parse_resistance
+from bjt_bias.bias import OPERATING_POINT_FIELDS
 
 VALID_FORM = {
     "vcc": "12",
@@ -78,6 +81,45 @@ class TestRoutes(unittest.TestCase):
     def test_post_missing_fields_does_not_crash(self):
         response = self.client.post("/", data={"vcc": "12"})
         self.assertEqual(response.status_code, 200)
+
+
+class TestVerificationRendering(unittest.TestCase):
+    def test_difference_is_rendered_in_the_row_unit(self):
+        point = {
+            "i_b_a": 0.0,
+            "i_c_a": 0.0,
+            "i_e_a": 0.0,
+            "v_b_v": 0.0,
+            "v_e_v": 0.0,
+            "v_c_v": 0.0,
+            "v_ce_v": 0.0,
+        }
+        result = {
+            "operating_point": dict(point),
+            "region": "active",
+            "warnings": [],
+            "verification": {
+                "method1": {**point, "i_b_a": 2e-6},
+                "method2": {**point, "i_b_a": 1e-6},
+                "max_difference": 5e-7,
+                "agrees": True,
+            },
+        }
+
+        app = create_app()
+        with app.test_request_context("/"):
+            html = render_template(
+                "index.html",
+                fields=[],
+                errors=[],
+                result=result,
+                op_fields=OPERATING_POINT_FIELDS,
+                fmt=format_value,
+            )
+
+        # 1e-6 A must read as 1.00e+00 in the I_B row's µA unit, not 1.00e-06.
+        self.assertIn("1.00e+00", html)
+        self.assertNotIn("1.00e-06", html)
 
 
 if __name__ == "__main__":

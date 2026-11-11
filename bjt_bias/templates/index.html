@@ -78,7 +78,7 @@
           <td>{{ symbol }}</td>
           <td>{{ fmt(result.verification.method1[key], scale) }} {{ unit }}</td>
           <td>{{ fmt(result.verification.method2[key], scale) }} {{ unit }}</td>
-          <td>{{ "%.2e"|format(result.verification.method1[key] - result.verification.method2[key]) }}</td>
+          <td>{{ "%.2e"|format((result.verification.method1[key] - result.verification.method2[key]) * scale) }} {{ unit }}</td>
         </tr>
         {% endfor %}
       </tbody>

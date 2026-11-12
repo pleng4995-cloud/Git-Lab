@@ -2,8 +2,18 @@ import unittest
 
 from flask import render_template
 
-from bjt_bias.app import create_app, format_value, parse_resistance
-from bjt_bias.bias import OPERATING_POINT_FIELDS
+from bjt_bias.app import (
+    circuit_labels,
+    create_app,
+    format_ohms,
+    format_symbol,
+    format_value,
+    format_volts,
+    ordered_operating_point_fields,
+    parse_resistance,
+    unit_multiplier,
+)
+from bjt_bias.bias import OPERATING_POINT_FIELDS, VCE_SAT_V
 
 VALID_FORM = {
     "vcc": "12",
@@ -114,12 +124,165 @@ class TestVerificationRendering(unittest.TestCase):
                 errors=[],
                 result=result,
                 op_fields=OPERATING_POINT_FIELDS,
+                result_fields=ordered_operating_point_fields(),
+                circuit=circuit_labels({}),
+                vce_sat=VCE_SAT_V,
+                symbol_html=format_symbol,
                 fmt=format_value,
             )
 
         # 1e-6 A must read as 1.00e+00 in the I_B row's µA unit, not 1.00e-06.
         self.assertIn("1.00e+00", html)
         self.assertNotIn("1.00e-06", html)
+
+
+class TestUnits(unittest.TestCase):
+    def test_unit_multiplier_known_and_unknown_keys(self):
+        self.assertEqual(unit_multiplier(""), 1.0)
+        self.assertEqual(unit_multiplier("ohm"), 1.0)
+        self.assertEqual(unit_multiplier("kohm"), 1e3)
+        self.assertEqual(unit_multiplier("mohm"), 1e6)
+        self.assertEqual(unit_multiplier("v"), 1.0)
+        self.assertEqual(unit_multiplier("none"), 1.0)
+        self.assertEqual(unit_multiplier("xyz"), 1.0)
+
+    def test_route_applies_unit_selector(self):
+        client = create_app().test_client()
+        with_unit = client.post("/", data={**VALID_FORM, "r1": "47", "r1_unit": "kohm"})
+        self.assertIn("1.324", with_unit.get_data(as_text=True))
+
+    def test_route_rejects_suffix_plus_unit_selector(self):
+        client = create_app().test_client()
+        response = client.post("/", data={**VALID_FORM, "r1": "47k", "r1_unit": "kohm"})
+        body = response.get_data(as_text=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("not both", body)
+
+
+class TestFieldMetadata(unittest.TestCase):
+    def setUp(self):
+        self.client = create_app().test_client()
+
+    def test_get_renders_unit_selector_with_kilo_ohm_default(self):
+        body = self.client.get("/").get_data(as_text=True)
+        self.assertIn('name="r1_unit"', body)
+        self.assertIn('<option value="kohm" selected>', body)
+        for label in ("Ω", "kΩ", "MΩ"):
+            self.assertIn(label, body)
+
+    def test_post_echoes_selected_unit(self):
+        body = self.client.post(
+            "/", data={**VALID_FORM, "r1": "100", "r1_unit": "mohm"}
+        ).get_data(as_text=True)
+        self.assertIn('<option value="mohm" selected>', body)
+
+    def test_defaults_match_lab_example(self):
+        body = self.client.get("/").get_data(as_text=True)
+        for value in ('value="12"', 'value="100"', 'value="22"',
+                      'value="2.2"', 'value="1"', 'value="100"', 'value="0.7"'):
+            self.assertIn(value, body)
+
+
+class TestDisplayHelpers(unittest.TestCase):
+    def test_result_order_starts_with_voltages(self):
+        keys = [field[0] for field in ordered_operating_point_fields()]
+        self.assertEqual(
+            keys,
+            ["v_b_v", "v_e_v", "v_c_v", "v_ce_v", "i_b_a", "i_c_a", "i_e_a"],
+        )
+
+    def test_ohms_auto_scales(self):
+        self.assertEqual(format_ohms(470), "470 Ω")
+        self.assertEqual(format_ohms(2_200), "2.2 kΩ")
+        self.assertEqual(format_ohms(100_000), "100 kΩ")
+        self.assertEqual(format_ohms(1e6), "1 MΩ")
+
+    def test_volts_trim_trailing_zeros(self):
+        self.assertEqual(format_volts(12), "12 V")
+        self.assertEqual(format_volts(0.7), "0.7 V")
+
+    def test_symbol_renders_subscript(self):
+        self.assertEqual(format_symbol("V_CE"), "V<sub>CE</sub>")
+        self.assertEqual(format_symbol("I_B"), "I<sub>B</sub>")
+
+    def test_circuit_labels_use_lab_defaults(self):
+        labels = circuit_labels({})
+        self.assertEqual(labels["vcc"], "12 V")
+        self.assertEqual(labels["r1"], "100 kΩ")
+        self.assertEqual(labels["r2"], "22 kΩ")
+        self.assertEqual(labels["rc"], "2.2 kΩ")
+        self.assertEqual(labels["re"], "1 kΩ")
+        self.assertEqual(labels["beta"], "100")
+
+
+class TestLabLayout(unittest.TestCase):
+    def setUp(self):
+        self.client = create_app().test_client()
+
+    def test_get_shows_lab_header_and_goal_strip(self):
+        body = self.client.get("/").get_data(as_text=True)
+        for text in ("Lab 02: BJT DC Bias Web App", "ENG29 2121",
+                     "Week 2 Goal", "<svg"):
+            self.assertIn(text, body)
+
+    def test_circuit_labels_use_default_values(self):
+        body = self.client.get("/").get_data(as_text=True)
+        for text in ("12 V", "100 kΩ", "22 kΩ", "2.2 kΩ", "1 kΩ"):
+            self.assertIn(text, body)
+
+    def test_results_show_voltages_before_currents(self):
+        body = self.client.post("/", data=VALID_FORM).get_data(as_text=True)
+        self.assertLess(body.index("V<sub>CE</sub>"), body.index("I<sub>B</sub>"))
+
+    def test_active_banner(self):
+        body = self.client.post("/", data=VALID_FORM).get_data(as_text=True)
+        self.assertIn("banner-active", body)
+        self.assertIn("Active region approximation OK", body)
+
+    def test_cutoff_banner(self):
+        body = self.client.post(
+            "/", data={**VALID_FORM, "r2": "2.2k"}
+        ).get_data(as_text=True)
+        self.assertIn("banner-cutoff", body)
+        self.assertIn("Cutoff", body)
+
+    def test_saturation_banner(self):
+        body = self.client.post(
+            "/", data={**VALID_FORM, "rc": "10k"}
+        ).get_data(as_text=True)
+        self.assertIn("banner-saturation", body)
+        self.assertIn("Saturation", body)
+
+    def test_error_keeps_form_and_hides_banner(self):
+        body = self.client.post(
+            "/", data={**VALID_FORM, "r1": "0"}
+        ).get_data(as_text=True)
+        self.assertIn("greater than zero", body)
+        self.assertIn('name="r1_unit"', body)
+        self.assertNotIn("banner-", body)
+
+    def test_banner_text_follows_engine_region(self):
+        point = {key: 0.0 for key, *_ in OPERATING_POINT_FIELDS}
+        point["v_ce_v"] = 0.2
+        result = {
+            "operating_point": point,
+            "region": "active",
+            "warnings": [],
+            "verification": {
+                "method1": dict(point), "method2": dict(point),
+                "max_difference": 0.0, "agrees": True,
+            },
+        }
+        app = create_app()
+        with app.test_request_context("/"):
+            html = render_template(
+                "index.html", fields=[], errors=[], result=result,
+                op_fields=OPERATING_POINT_FIELDS,
+                result_fields=ordered_operating_point_fields(),
+                circuit=circuit_labels({}), vce_sat=VCE_SAT_V,
+                symbol_html=format_symbol, fmt=format_value,
+            )
+        self.assertIn("banner-active", html)
 
 
 if __name__ == "__main__":

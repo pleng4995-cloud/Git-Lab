@@ -3,65 +3,223 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BJT Common-Emitter DC Bias</title>
+  <title>Lab 02: BJT DC Bias Web App</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<main>
-  <header>
-    <h1>BJT Common-Emitter DC Bias</h1>
-    <p class="subtitle">
-      Voltage-divider bias &mdash; DC operating point with an independent
-      nodal-analysis check.
-    </p>
+<main class="page">
+
+  <header class="lab-header">
+    <div class="brand">
+      <svg class="brand-icon" viewBox="0 0 48 48" aria-hidden="true">
+        <rect x="13" y="13" width="22" height="22" rx="3"></rect>
+        <rect x="19" y="19" width="10" height="10" rx="1"></rect>
+        <path d="M19 13V6M24 13V6M29 13V6M19 42v-7M24 42v-7M29 42v-7
+                 M13 19H6M13 24H6M13 29H6M42 19h-7M42 24h-7M42 29h-7"></path>
+      </svg>
+      <div class="brand-text">
+        <h1>Lab 02: BJT DC Bias Web App</h1>
+        <p class="lab-subtitle">ENG29 2121 &ndash; Common Emitter (Voltage Divider Bias)</p>
+      </div>
+    </div>
+    <div class="course-badge">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M9 8 4 12l5 4M15 8l5 4-5 4"></path>
+      </svg>
+      <span>Computer Programming for<br>Electrical Engineers</span>
+    </div>
   </header>
 
-  <form method="post">
-    <div class="grid">
-      {% for f in fields %}
-      <label>
-        <span>{{ f.label }}{% if f.unit %} ({{ f.unit }}){% endif %}</span>
-        <input type="text" name="{{ f.name }}" value="{{ f.value }}"
-               inputmode="decimal" autocomplete="off">
-      </label>
-      {% endfor %}
-    </div>
-    <button type="submit">Calculate</button>
-  </form>
+  <div class="layout">
 
-  {% if errors %}
-  <section class="errors" role="alert">
-    <h2>Invalid input</h2>
-    <ul>
-      {% for error in errors %}<li>{{ error }}</li>{% endfor %}
-    </ul>
-  </section>
-  {% endif %}
+    <section class="panel panel-input">
+      <h2>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1
+                   M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"></path>
+        </svg>
+        Input Parameters
+      </h2>
+
+      <form method="post">
+        <div class="field-list">
+          {% for f in fields %}
+          <div class="field">
+            <label for="{{ f.name }}">{{ f.display|safe }}
+              <span class="hint">({{ f.description }})</span>
+            </label>
+            <span class="value-row">
+              <input id="{{ f.name }}" type="text" name="{{ f.name }}" value="{{ f.value }}"
+                     inputmode="decimal" autocomplete="off">
+              <select name="{{ f.name }}_unit" aria-label="{{ f.label }} unit">
+                {% for unit_label, unit_key in f.units %}
+                <option value="{{ unit_key }}"{% if unit_key == f.selected_unit %} selected{% endif %}>{{ unit_label }}</option>
+                {% endfor %}
+              </select>
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+        <button type="submit">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="5" y="3" width="14" height="18" rx="2"></rect>
+            <path d="M8 7h8M8 11h2M12 11h2M16 11h.01M8 15h2M12 15h2M16 15h.01M8 19h2M12 19h2M16 19h.01"></path>
+          </svg>
+          Calculate DC Bias
+        </button>
+      </form>
+
+      {% if errors %}
+      <section class="errors" role="alert">
+        <h2>Invalid input</h2>
+        <ul>
+          {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+    </section>
+
+    <section class="panel panel-circuit">
+      <h2>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="5" cy="6" r="2"></circle>
+          <circle cx="19" cy="6" r="2"></circle>
+          <circle cx="12" cy="18" r="2"></circle>
+          <path d="M5 8v3h14V8M12 11v5"></path>
+        </svg>
+        Circuit: Common-Emitter Amplifier
+      </h2>
+
+      <svg class="schematic" viewBox="0 0 340 400" role="img"
+           aria-label="Common-emitter amplifier with voltage-divider bias">
+        <!-- VCC rail -->
+        <line class="wire" x1="70" y1="40" x2="246" y2="40"></line>
+        <circle class="node" cx="246" cy="40" r="3"></circle>
+        <text class="label strong" x="158" y="30" text-anchor="middle">VCC = {{ circuit.vcc }}</text>
+
+        <!-- R1 -->
+        <line class="wire" x1="70" y1="40" x2="70" y2="60"></line>
+        <rect class="component" x="60" y="60" width="20" height="56" rx="2"></rect>
+        <line class="wire" x1="70" y1="116" x2="70" y2="205"></line>
+        <text class="label" x="48" y="84" text-anchor="end">R1</text>
+        <text class="label value" x="48" y="100" text-anchor="end">{{ circuit.r1 }}</text>
+
+        <!-- base node -->
+        <circle class="node" cx="70" cy="205" r="3"></circle>
+        <line class="wire" x1="70" y1="205" x2="210" y2="205"></line>
+
+        <!-- R2 -->
+        <line class="wire" x1="70" y1="205" x2="70" y2="241"></line>
+        <rect class="component" x="60" y="241" width="20" height="56" rx="2"></rect>
+        <line class="wire" x1="70" y1="297" x2="70" y2="345"></line>
+        <text class="label" x="48" y="265" text-anchor="end">R2</text>
+        <text class="label value" x="48" y="281" text-anchor="end">{{ circuit.r2 }}</text>
+        <g class="ground" transform="translate(70,345)">
+          <line x1="-12" y1="0" x2="12" y2="0"></line>
+          <line x1="-7" y1="6" x2="7" y2="6"></line>
+          <line x1="-3" y1="12" x2="3" y2="12"></line>
+        </g>
+
+        <!-- RC -->
+        <line class="wire" x1="246" y1="40" x2="246" y2="90"></line>
+        <rect class="component" x="236" y="90" width="20" height="56" rx="2"></rect>
+        <line class="wire" x1="246" y1="146" x2="246" y2="175"></line>
+        <text class="label" x="266" y="112">RC</text>
+        <text class="label value" x="266" y="128">{{ circuit.rc }}</text>
+
+        <!-- transistor Q1 -->
+        <circle class="device" cx="232" cy="205" r="30"></circle>
+        <line class="wire" x1="210" y1="185" x2="210" y2="225"></line>
+        <line class="wire" x1="210" y1="193" x2="246" y2="175"></line>
+        <line class="wire" x1="210" y1="217" x2="246" y2="235"></line>
+        <polygon class="arrow" points="246,235 235,229 239,241"></polygon>
+        <text class="label" x="268" y="196">Q1</text>
+        <text class="label value" x="268" y="212">NPN</text>
+        <text class="label value" x="268" y="228">&beta; = {{ circuit.beta }}</text>
+
+        <!-- RE -->
+        <line class="wire" x1="246" y1="235" x2="246" y2="285"></line>
+        <rect class="component" x="236" y="285" width="20" height="56" rx="2"></rect>
+        <line class="wire" x1="246" y1="341" x2="246" y2="365"></line>
+        <text class="label" x="266" y="309">RE</text>
+        <text class="label value" x="266" y="325">{{ circuit.re }}</text>
+        <g class="ground" transform="translate(246,365)">
+          <line x1="-12" y1="0" x2="12" y2="0"></line>
+          <line x1="-7" y1="6" x2="7" y2="6"></line>
+          <line x1="-3" y1="12" x2="3" y2="12"></line>
+        </g>
+      </svg>
+    </section>
+
+    <section class="panel panel-results">
+      <h2>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path>
+        </svg>
+        DC Bias Results
+      </h2>
+
+      {% if result %}
+      <table class="results">
+        <tbody>
+          {% for key, symbol, unit, scale in result_fields %}
+          <tr>
+            <td>{{ symbol_html(symbol)|safe }}</td>
+            <td>{{ fmt(result.operating_point[key], scale) }} {{ unit }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="banner banner-{{ result.region }}">
+        <svg class="banner-icon" viewBox="0 0 24 24" aria-hidden="true">
+          {% if result.region == "active" %}
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M7.5 12.5l3 3 6-6.5"></path>
+          {% elif result.region == "cutoff" %}
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M8 12h8"></path>
+          {% else %}
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 7v6M12 17h.01"></path>
+          {% endif %}
+        </svg>
+        <div>
+          {% if result.region == "active" %}
+          <strong>Active region approximation OK</strong>
+          <p>V_CE = {{ fmt(result.operating_point.v_ce_v, 1.0) }} V &gt; {{ vce_sat }} V (transistor in active region)</p>
+          {% elif result.region == "cutoff" %}
+          <strong>Cutoff region</strong>
+          <p>I_B &le; 0 &mdash; transistor is off; V_CE = VCC</p>
+          {% else %}
+          <strong>Saturation region</strong>
+          <p>V_CE = {{ fmt(result.operating_point.v_ce_v, 1.0) }} V &lt; {{ vce_sat }} V &mdash; active-mode equations are not valid</p>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if result.warnings %}
+      <section class="warnings">
+        <h2>Warnings</h2>
+        <ul>
+          {% for warning in result.warnings %}<li>{{ warning }}</li>{% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+      {% else %}
+      <p class="placeholder">Enter parameters and press Calculate</p>
+      {% endif %}
+    </section>
+
+  </div>
 
   {% if result %}
-  <section class="region">
-    <span class="badge badge-{{ result.region }}">{{ result.region }}</span>
-  </section>
-
-  <section>
-    <h2>Operating point</h2>
-    <table>
-      <thead>
-        <tr><th>Quantity</th><th>Value</th></tr>
-      </thead>
-      <tbody>
-        {% for key, symbol, unit, scale in op_fields %}
-        <tr>
-          <td>{{ symbol }}</td>
-          <td>{{ fmt(result.operating_point[key], scale) }} {{ unit }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </section>
-
-  <section>
-    <h2>Verification</h2>
+  <details class="verification" open>
+    <summary>
+      Verification: Method 1 vs Method 2 &mdash;
+      {{ "PASS" if result.verification.agrees else "FAIL" }}
+    </summary>
     <p class="muted">
       Method 1: Thevenin divider reduction. Method 2: independent nodal
       analysis solved as a linear system.
@@ -75,7 +233,7 @@
       <tbody>
         {% for key, symbol, unit, scale in op_fields %}
         <tr>
-          <td>{{ symbol }}</td>
+          <td>{{ symbol_html(symbol)|safe }}</td>
           <td>{{ fmt(result.verification.method1[key], scale) }} {{ unit }}</td>
           <td>{{ fmt(result.verification.method2[key], scale) }} {{ unit }}</td>
           <td>{{ "%.2e"|format((result.verification.method1[key] - result.verification.method2[key]) * scale) }} {{ unit }}</td>
@@ -88,17 +246,24 @@
       {{ "%.2e"|format(result.verification.max_difference) }} &mdash;
       {{ "PASS" if result.verification.agrees else "FAIL" }}
     </p>
-  </section>
+  </details>
+  {% endif %}
 
-  {% if result.warnings %}
-  <section class="warnings">
-    <h2>Warnings</h2>
-    <ul>
-      {% for warning in result.warnings %}<li>{{ warning }}</li>{% endfor %}
-    </ul>
-  </section>
-  {% endif %}
-  {% endif %}
+  <footer class="goal-strip">
+    <div class="goal-tag">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"></circle>
+        <circle cx="12" cy="12" r="4"></circle>
+      </svg>
+      Week 2 Goal
+    </div>
+    <p>
+      Build a Flask web app that takes the circuit parameters, computes the
+      BJT DC bias (V_B, V_E, V_C, V_CE, I_B, I_C, I_E) for a common-emitter
+      amplifier with voltage-divider bias, and displays the results.
+    </p>
+  </footer>
+
 </main>
 </body>
 </html>

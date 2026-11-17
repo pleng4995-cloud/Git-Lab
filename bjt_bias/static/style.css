@@ -175,6 +175,12 @@ body {
   outline-offset: 1px;
 }
 
+.mode-hint {
+  margin: -4px 0 12px;
+  font-size: 12px;
+  color: #6b7c8f;
+}
+
 /* Inputs */
 
 .field-list {

@@ -42,18 +42,20 @@
         Input Parameters
       </h2>
 
-      <form method="get" class="mode-bar">
-        <label for="mode">Bias Mode</label>
-        <select id="mode" name="mode">
-          {% for key, label in mode_options %}
-          <option value="{{ key }}"{% if key == mode %} selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-        <button type="submit" class="mode-load">Load form</button>
-      </form>
-
       <form method="post">
-        <input type="hidden" name="mode" value="{{ mode }}">
+        <div class="mode-bar">
+          <label for="mode">Bias Mode</label>
+          <select id="mode" name="mode"
+                  onchange="window.location.href='{{ url_for('index') }}?mode=' + encodeURIComponent(this.value)">
+            {% for key, label in mode_options %}
+            <option value="{{ key }}"{% if key == mode %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" formaction="{{ url_for('index') }}" formmethod="get" class="mode-load">Load form</button>
+        </div>
+        <noscript>
+          <p class="mode-hint">JavaScript ปิดอยู่ — เลือกโหมดแล้วกด <strong>Load form</strong> เพื่อเปลี่ยนไดอะแกรมและช่องกรอก</p>
+        </noscript>
         <div class="field-list">
           {% for f in fields %}
           <div class="field">

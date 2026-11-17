@@ -13,11 +13,21 @@ python -m venv .venv
 
 ## รัน
 
+วิธีที่แนะนำ — ดับเบิลคลิก `start.bat` ที่รากโปรเจกต์
+สคริปต์จะใช้ `.venv` ให้เอง แล้วเปิดเบราว์เซอร์ที่ <http://127.0.0.1:5000>
+(ถ้ามีเซิร์ฟเวอร์รันอยู่แล้ว จะเปิดเบราว์เซอร์ให้อย่างเดียว ไม่เปิดซ้ำ)
+
+หรือรันเองใน PowerShell ที่รากโปรเจกต์:
+
 ```powershell
 .\.venv\Scripts\python.exe -m bjt_bias.app
 ```
 
-เปิด <http://127.0.0.1:5000>
+แล้วเปิด <http://127.0.0.1:5000> — **terminal ต้องเปิดค้างไว้** ตลอดที่ใช้งาน
+
+> ถ้าเรียก `python -m bjt_bias.app` เฉย ๆ จะได้
+> `ModuleNotFoundError: No module named 'flask'` เพราะ Flask อยู่ใน `.venv` เท่านั้น
+> ต้องเรียกผ่าน `.\.venv\Scripts\python.exe` (หรือ activate venv ก่อน)
 
 ## หน้าเว็บ (Lab 02 layout)
 

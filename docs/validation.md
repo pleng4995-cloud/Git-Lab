@@ -7,11 +7,22 @@
 
 | กรณี | เลือกโหมดและกรอกค่า | คาดหมายก่อนรัน | เห็นจริง | วิธีตรวจ | สถานะ |
 |---|---|---|---|---|---|
-| A1 · โหมดเดิม | Divider · R1 = 100 kΩ, R2 = 22 kΩ, RE = 1 kΩ | IC = 1.2298 mA · VCE = 8.0522 V | — | — | — |
-| A2 · Fixed | Fixed · RB = 1 MΩ | IC = 1.1300 mA · VCE = 9.5140 V | — | — | — |
-| A3 · Emitter | Emitter · RB = 1 MΩ, RE = 1 kΩ | IC = 1.0263 mA · VCE = 8.7054 V | — | — | — |
-| A4 · เปลี่ยนค่าเดียว | Emitter · RB = 1 MΩ, RE = 2 kΩ | ทำนาย: IC **ลดลง** จาก A3 · IC = 0.9401 mA · VCE = 8.0328 V | — | — | — |
-| A5 · อินพุตผิด | Fixed · RB = 0 | ฟอร์ม/Flask แจ้งให้แก้ RB, หน้าเว็บไม่ล่ม, ไม่มีผลรอบก่อนค้าง | — | — | — |
+| A1 · โหมดเดิม | Divider · R1 = 100 kΩ, R2 = 22 kΩ, RE = 1 kΩ | IC = 1.2298 mA · VCE = 8.0522 V | — | Playwright MCP | NOT RUN |
+| A2 · Fixed | Fixed · RB = 1 MΩ | IC = 1.1300 mA · VCE = 9.5140 V | — | Playwright MCP | NOT RUN |
+| A3 · Emitter | Emitter · RB = 1 MΩ, RE = 1 kΩ | IC = 1.0263 mA · VCE = 8.7054 V | — | Playwright MCP | NOT RUN |
+| A4 · เปลี่ยนค่าเดียว | Emitter · RB = 1 MΩ, RE = 2 kΩ | ทำนาย: IC **ลดลง** จาก A3 · IC = 0.9401 mA · VCE = 8.0328 V | — | Playwright MCP | NOT RUN |
+| A5 · อินพุตผิด | Fixed · RB = 0 | ฟอร์ม/Flask แจ้งให้แก้ RB, หน้าเว็บไม่ล่ม, ไม่มีผลรอบก่อนค้าง | — | Playwright MCP | NOT RUN |
+
+> **NOT RUN — เหตุผล:** เครื่องที่รันตรวจไม่พบ `node` และ `npx` (Playwright MCP
+> เริ่มไม่ได้) และไม่พบ Google Chrome ที่ path มาตรฐาน จึงไม่มีเบราว์เซอร์ให้
+> เอเจนต์ควบคุม ตามใบงานให้บันทึก NOT RUN พร้อมเหตุผลแทนการใช้ curl
+>
+> **ขั้นตอนก่อนรันซ้ำ**
+> 1. ติดตั้ง Node.js LTS แล้วปิด–เปิด OpenCode (เพื่อรับ PATH ใหม่)
+> 2. ติดตั้ง Google Chrome
+> 3. ตรวจว่า `opencode.json` ที่รากโปรเจกต์มี `mcp.servers.playwright` (มีแล้ว)
+> 4. เปิด Flask ที่ `http://127.0.0.1:5000/` แล้วรัน A1–A5 เติมคอลัมน์
+>    "เห็นจริง / วิธีตรวจ / สถานะ"
 
 ## ค่าอ้างอิง (คำนวณมือ)
 

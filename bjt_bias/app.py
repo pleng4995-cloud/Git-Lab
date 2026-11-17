@@ -372,4 +372,6 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # The reloader spawns a second process; disabling it keeps one process so
+    # stopping the server always releases port 5000.
+    app.run(debug=True, use_reloader=False)

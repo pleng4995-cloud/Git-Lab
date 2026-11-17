@@ -2,11 +2,24 @@
 
 from flask import Flask, render_template, request
 
-from bjt_bias.bias import OPERATING_POINT_FIELDS, VCE_SAT_V, analyze_bias
+from bjt_bias.bias import (
+    OPERATING_POINT_FIELDS,
+    VCE_SAT_V,
+    analyze_bias,
+    analyze_emitter_bias,
+    analyze_fixed_bias,
+)
 
 RESISTOR_UNITS = (("Ω", "ohm"), ("kΩ", "kohm"), ("MΩ", "mohm"))
 VOLT_UNITS = (("V", "v"),)
 GAIN_UNITS = (("–", "none"),)
+
+MODE_LABELS = {
+    "divider": "Voltage Divider Bias",
+    "fixed": "Fixed Bias",
+    "emitter": "Emitter Bias",
+}
+DEFAULT_MODE = "divider"
 
 FIELDS = (
     {
@@ -17,6 +30,7 @@ FIELDS = (
         "units": VOLT_UNITS,
         "default_value": "12",
         "default_unit": "v",
+        "modes": ("divider", "fixed", "emitter"),
     },
     {
         "name": "r1",
@@ -26,6 +40,7 @@ FIELDS = (
         "units": RESISTOR_UNITS,
         "default_value": "100",
         "default_unit": "kohm",
+        "modes": ("divider",),
     },
     {
         "name": "r2",
@@ -35,6 +50,17 @@ FIELDS = (
         "units": RESISTOR_UNITS,
         "default_value": "22",
         "default_unit": "kohm",
+        "modes": ("divider",),
+    },
+    {
+        "name": "rb",
+        "label": "RB",
+        "display": "R<sub>B</sub>",
+        "description": "Base Resistor",
+        "units": RESISTOR_UNITS,
+        "default_value": "1",
+        "default_unit": "mohm",
+        "modes": ("fixed", "emitter"),
     },
     {
         "name": "rc",
@@ -44,6 +70,7 @@ FIELDS = (
         "units": RESISTOR_UNITS,
         "default_value": "2.2",
         "default_unit": "kohm",
+        "modes": ("divider", "fixed", "emitter"),
     },
     {
         "name": "re",
@@ -53,6 +80,7 @@ FIELDS = (
         "units": RESISTOR_UNITS,
         "default_value": "1",
         "default_unit": "kohm",
+        "modes": ("divider", "emitter"),
     },
     {
         "name": "beta",
@@ -62,6 +90,7 @@ FIELDS = (
         "units": GAIN_UNITS,
         "default_value": "100",
         "default_unit": "none",
+        "modes": ("divider", "fixed", "emitter"),
     },
     {
         "name": "vbe",
@@ -71,10 +100,21 @@ FIELDS = (
         "units": VOLT_UNITS,
         "default_value": "0.7",
         "default_unit": "v",
+        "modes": ("divider", "fixed", "emitter"),
     },
 )
 
-RESISTANCE_FIELDS = ("r1", "r2", "rc", "re")
+MODES = {
+    mode: {
+        "label": label,
+        "fields": tuple(
+            spec["name"] for spec in FIELDS if mode in spec["modes"]
+        ),
+    }
+    for mode, label in MODE_LABELS.items()
+}
+
+RESISTANCE_FIELDS = ("r1", "r2", "rb", "rc", "re")
 
 MULTIPLIERS = {"k": 1e3, "K": 1e3, "M": 1e6}
 
@@ -167,20 +207,40 @@ def _default_value(spec):
 DEFAULT_INPUTS = {spec["name"]: _default_value(spec) for spec in FIELDS}
 
 
-def circuit_labels(parsed):
+def circuit_labels(parsed, mode=DEFAULT_MODE):
     """Labels for the schematic, from the submitted values (defaults fill gaps)."""
     inputs = {**DEFAULT_INPUTS, **parsed}
-    return {
+    labels = {
         "vcc": format_volts(inputs["vcc"]),
-        "r1": format_ohms(inputs["r1"]),
-        "r2": format_ohms(inputs["r2"]),
         "rc": format_ohms(inputs["rc"]),
-        "re": format_ohms(inputs["re"]),
         "beta": trim_number(inputs["beta"]),
     }
+    if mode == "divider":
+        labels["r1"] = format_ohms(inputs["r1"])
+        labels["r2"] = format_ohms(inputs["r2"])
+    else:
+        labels["rb"] = format_ohms(inputs["rb"])
+    if mode in ("divider", "emitter"):
+        labels["re"] = format_ohms(inputs["re"])
+    return labels
 
 
-def _form_fields(values, units):
+def _mode_fields(mode):
+    """Return the field specs used by ``mode``, in form order."""
+    return [spec for spec in FIELDS if mode in spec["modes"]]
+
+
+def _resolve_mode(raw):
+    """Return ``(mode, error)`` for a raw mode value from the request."""
+    value = (raw or "").strip().lower()
+    if not value:
+        return DEFAULT_MODE, None
+    if value in MODES:
+        return value, None
+    return DEFAULT_MODE, f"Unknown bias mode: '{raw}'."
+
+
+def _form_fields(values, units, mode=DEFAULT_MODE):
     return [
         {
             "name": spec["name"],
@@ -191,16 +251,16 @@ def _form_fields(values, units):
             "selected_unit": units.get(spec["name"], ""),
             "value": values.get(spec["name"], spec["default_value"]),
         }
-        for spec in FIELDS
+        for spec in _mode_fields(mode)
     ]
 
 
-def _read_form(form):
+def _read_form(form, mode=DEFAULT_MODE):
     values = {}
     units = {}
     parsed = {}
     errors = []
-    for spec in FIELDS:
+    for spec in _mode_fields(mode):
         name = spec["name"]
         label = spec["label"]
         raw = form.get(name, "")
@@ -227,7 +287,18 @@ def _read_form(form):
     return values, units, parsed, errors
 
 
-def page_context(fields, errors, result, parsed):
+def _analyze(mode, parsed):
+    """Dispatch to the model selected by ``mode``."""
+    if mode == "divider":
+        return analyze_bias(**parsed)
+    if mode == "fixed":
+        return analyze_fixed_bias(**parsed)
+    if mode == "emitter":
+        return analyze_emitter_bias(**parsed)
+    raise ValueError(f"Unknown bias mode: '{mode}'.")
+
+
+def page_context(fields, errors, result, parsed, mode=DEFAULT_MODE):
     """Build the template context shared by the GET and POST responses."""
     return {
         "fields": fields,
@@ -235,10 +306,15 @@ def page_context(fields, errors, result, parsed):
         "result": result,
         "op_fields": OPERATING_POINT_FIELDS,
         "result_fields": ordered_operating_point_fields(),
-        "circuit": circuit_labels(parsed),
+        "circuit": circuit_labels(parsed, mode),
         "vce_sat": VCE_SAT_V,
         "symbol_html": format_symbol,
         "fmt": format_value,
+        "mode": mode,
+        "mode_label": MODES[mode]["label"],
+        "mode_options": [
+            (key, spec["label"]) for key, spec in MODES.items()
+        ],
     }
 
 
@@ -249,23 +325,44 @@ def create_app():
     @app.route("/", methods=["GET", "POST"])
     def index():
         if request.method == "GET":
+            mode, mode_error = _resolve_mode(request.args.get("mode"))
             values = {spec["name"]: spec["default_value"] for spec in FIELDS}
             units = {spec["name"]: spec["default_unit"] for spec in FIELDS}
             return render_template(
                 "index.html",
-                **page_context(_form_fields(values, units), [], None, DEFAULT_INPUTS),
+                **page_context(
+                    _form_fields(values, units, mode),
+                    [mode_error] if mode_error else [],
+                    None,
+                    DEFAULT_INPUTS,
+                    mode,
+                ),
             )
 
-        values, units, parsed, errors = _read_form(request.form)
+        mode, mode_error = _resolve_mode(request.form.get("mode"))
+        if mode_error:
+            values = {
+                spec["name"]: request.form.get(spec["name"], "")
+                for spec in FIELDS
+            }
+            units = {
+                spec["name"]: request.form.get(f"{spec['name']}_unit", "")
+                for spec in FIELDS
+            }
+            parsed, errors = {}, [mode_error]
+        else:
+            values, units, parsed, errors = _read_form(request.form, mode)
         result = None
         if not errors:
             try:
-                result = analyze_bias(**parsed)
+                result = _analyze(mode, parsed)
             except ValueError as error:
                 errors.append(str(error))
         return render_template(
             "index.html",
-            **page_context(_form_fields(values, units), errors, result, parsed),
+            **page_context(
+                _form_fields(values, units, mode), errors, result, parsed, mode
+            ),
         )
 
     return app

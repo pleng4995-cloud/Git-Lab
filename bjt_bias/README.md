@@ -33,15 +33,35 @@ python -m venv .venv
 
 Layout ยุบเป็นคอลัมน์เดียวเมื่อจอกว้างน้อยกว่า 900px
 
+## โหมดการไบแอส
+
+หน้า `/` เลือกโหมดจาก dropdown เหนือฟอร์มแล้วกด **Load form** (ไม่ใช้ JavaScript)
+ฟอร์มจะแสดงเฉพาะช่องที่โหมดนั้นใช้
+
+| โหมด | ช่องที่ใช้ | สมการ IB |
+|---|---|---|
+| Voltage Divider Bias | VCC, R1, R2, RC, RE, β, VBE | `(VTH − VBE) / [RTH + (β+1)·RE]` |
+| Fixed Bias | VCC, RB, RC, β, VBE | `(VCC − VBE) / RB` |
+| Emitter Bias | VCC, RB, RE, RC, β, VBE | `(VCC − VBE) / [RB + (β+1)·RE]` |
+
+จาก IB: `IC = β·IB`, `IE = (β+1)·IB`, `VE = IE·RE` (Fixed ใช้ `VE = 0`),
+`VB = VE + VBE`, `VC = VCC − IC·RC`, `VCE = VC − VE`
+
+โหมด Divider ยังมีแผง Verification (Method 1 vs Method 2) ส่วนโหมดใหม่ไม่มี
+เพราะใบงานกำหนดให้ใช้สมการเดียว และถ้า `IB ≤ 0` หรือ `VCE ≤ 0.2 V`
+ระบบจะแสดงค่าจากสมการพร้อมคำเตือนว่าแบบจำลอง Forward Active อาจใช้ไม่ได้
+(ไม่แก้ค่าเป็นจุดทำงานใน Cutoff/Saturation)
+
 ## อินพุต
 
 | ช่อง | ความหมาย | หน่วยที่เลือกได้ | ค่าเริ่มต้น |
 |---|---|---|---|
 | `VCC` | แหล่งจ่ายไฟ | V | 12 V |
-| `R1` | ตัวต้านทานตัวบน (VCC → base) | Ω / kΩ / MΩ | 100 kΩ |
-| `R2` | ตัวต้านทานตัวล่าง (base → GND) | Ω / kΩ / MΩ | 22 kΩ |
+| `R1` | ตัวต้านทานตัวบน (VCC → base) — Divider | Ω / kΩ / MΩ | 100 kΩ |
+| `R2` | ตัวต้านทานตัวล่าง (base → GND) — Divider | Ω / kΩ / MΩ | 22 kΩ |
+| `RB` | ตัวต้านทานฐาน (VCC → base) — Fixed / Emitter | Ω / kΩ / MΩ | 1 MΩ |
 | `RC` | ตัวต้านทาน collector | Ω / kΩ / MΩ | 2.2 kΩ |
-| `RE` | ตัวต้านทาน emitter | Ω / kΩ / MΩ | 1 kΩ |
+| `RE` | ตัวต้านทาน emitter — Divider / Emitter | Ω / kΩ / MΩ | 1 kΩ |
 | `beta` | อัตราขยายกระแส `h_FE` | – | 100 |
 | `VBE` | แรงดัน base-emitter | V | 0.7 V |
 

@@ -188,6 +188,113 @@ def classify_region(operating_point, vcc, r1, r2):
     return "active", []
 
 
+def solve_fixed_bias(vcc, rb, rc, beta, vbe):
+    """Solve fixed bias: RB from VCC to the base, emitter grounded."""
+    i_b = (vcc - vbe) / rb
+    i_c = beta * i_b
+    i_e = (beta + 1) * i_b
+    v_e = 0.0
+    v_c = vcc - i_c * rc
+    return {
+        "i_b_a": i_b,
+        "i_c_a": i_c,
+        "i_e_a": i_e,
+        "v_b_v": v_e + vbe,
+        "v_e_v": v_e,
+        "v_c_v": v_c,
+        "v_ce_v": v_c - v_e,
+    }
+
+
+def solve_emitter_bias(vcc, rb, re, rc, beta, vbe):
+    """Solve emitter bias: RB from VCC to the base, RE from emitter to ground."""
+    i_b = (vcc - vbe) / (rb + (beta + 1) * re)
+    i_c = beta * i_b
+    i_e = (beta + 1) * i_b
+    v_e = i_e * re
+    v_c = vcc - i_c * rc
+    return {
+        "i_b_a": i_b,
+        "i_c_a": i_c,
+        "i_e_a": i_e,
+        "v_b_v": v_e + vbe,
+        "v_e_v": v_e,
+        "v_c_v": v_c,
+        "v_ce_v": v_c - v_e,
+    }
+
+
+def _validate_common_inputs(vcc, rc, beta, vbe):
+    """Validate the inputs that every single-supply mode shares."""
+    vcc = _positive_number(vcc, "VCC")
+    _positive_number(rc, "RC")
+    _positive_number(beta, "beta")
+    vbe = _finite_number(vbe, "VBE")
+    if vbe < 0 or vbe >= vcc:
+        raise ValueError("VBE must be between 0 and VCC.")
+
+
+def _forward_active_result(operating_point, vbe):
+    """Wrap a linear operating point with its region and model warnings.
+
+    Unlike the divider analysis, the operating point is never replaced: the
+    lab asks only for a warning when the forward-active model may not hold.
+    """
+    if operating_point["i_b_a"] <= 0:
+        region = "cutoff"
+    elif operating_point["v_ce_v"] <= VCE_SAT_V:
+        region = "saturation"
+    else:
+        region = "active"
+
+    warnings = []
+    low, high = VBE_PLAUSIBLE_RANGE_V
+    if vbe < low or vbe > high:
+        warnings.append(
+            f"VBE = {vbe} V is outside the typical silicon range "
+            f"{low}-{high} V."
+        )
+    if region == "cutoff":
+        warnings.append(
+            "I_B <= 0: the forward-active model may not be valid "
+            "(the transistor may be in cutoff)."
+        )
+    elif region == "saturation":
+        warnings.append(
+            f"V_CE = {operating_point['v_ce_v']:.3f} V <= {VCE_SAT_V} V: "
+            "the forward-active model may not be valid "
+            "(the transistor may be in saturation)."
+        )
+
+    return {
+        "operating_point": dict(operating_point),
+        "region": region,
+        "warnings": warnings,
+        "verification": None,
+    }
+
+
+def analyze_fixed_bias(vcc, rb, rc, beta, vbe):
+    """Validate fixed-bias inputs and return the full bias analysis."""
+    _validate_common_inputs(vcc, rc, beta, vbe)
+    _positive_number(rb, "RB")
+    point = solve_fixed_bias(
+        float(vcc), float(rb), float(rc), float(beta), float(vbe)
+    )
+    return _forward_active_result(point, float(vbe))
+
+
+def analyze_emitter_bias(vcc, rb, re, rc, beta, vbe):
+    """Validate emitter-bias inputs and return the full bias analysis."""
+    _validate_common_inputs(vcc, rc, beta, vbe)
+    _positive_number(rb, "RB")
+    _positive_number(re, "RE")
+    point = solve_emitter_bias(
+        float(vcc), float(rb), float(re), float(rc), float(beta), float(vbe)
+    )
+    return _forward_active_result(point, float(vbe))
+
+
 def analyze_bias(vcc, r1, r2, rc, re, beta, vbe):
     """Validate the inputs and return the full bias analysis."""
     validate_inputs(vcc, r1, r2, rc, re, beta, vbe)

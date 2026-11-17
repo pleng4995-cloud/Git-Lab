@@ -9,7 +9,8 @@
 และ Emitter Bias (เพิ่มใน Lab 3)
 
 - **GitHub:** <https://github.com/pleng4995-cloud/Git-Lab>
-- **Commit SHA ของงาน Lab 3:** `<!-- SHA -->`
+- **Commit SHA ของงาน Lab 3:** [`de871dc`](https://github.com/pleng4995-cloud/Git-Lab/commit/de871dccca5f3b9368640ed85cb8057c0e74310a)
+  (`de871dccca5f3b9368640ed85cb8057c0e74310a`)
 - **ตารางตรวจรับ A1–A5 + หลักฐานจากหน้าเว็บ:** [`docs/validation.md`](docs/validation.md)
 
 ### วิธีรัน

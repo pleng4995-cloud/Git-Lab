@@ -42,7 +42,18 @@
         Input Parameters
       </h2>
 
+      <form method="get" class="mode-bar">
+        <label for="mode">Bias Mode</label>
+        <select id="mode" name="mode">
+          {% for key, label in mode_options %}
+          <option value="{{ key }}"{% if key == mode %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="mode-load">Load form</button>
+      </form>
+
       <form method="post">
+        <input type="hidden" name="mode" value="{{ mode }}">
         <div class="field-list">
           {% for f in fields %}
           <div class="field">
@@ -72,7 +83,7 @@
 
       {% if errors %}
       <section class="errors" role="alert">
-        <h2>Invalid input</h2>
+        <h2>Invalid input ({{ mode_label }})</h2>
         <ul>
           {% for error in errors %}<li>{{ error }}</li>{% endfor %}
         </ul>
@@ -92,12 +103,13 @@
       </h2>
 
       <svg class="schematic" viewBox="0 0 340 400" role="img"
-           aria-label="Common-emitter amplifier with voltage-divider bias">
+           aria-label="Common-emitter amplifier, {{ mode_label }}">
         <!-- VCC rail -->
         <line class="wire" x1="70" y1="40" x2="246" y2="40"></line>
         <circle class="node" cx="246" cy="40" r="3"></circle>
         <text class="label strong" x="158" y="30" text-anchor="middle">VCC = {{ circuit.vcc }}</text>
 
+        {% if mode == "divider" %}
         <!-- R1 -->
         <line class="wire" x1="70" y1="40" x2="70" y2="60"></line>
         <rect class="component" x="60" y="60" width="20" height="56" rx="2"></rect>
@@ -120,6 +132,18 @@
           <line x1="-7" y1="6" x2="7" y2="6"></line>
           <line x1="-3" y1="12" x2="3" y2="12"></line>
         </g>
+        {% else %}
+        <!-- RB: base resistor straight from VCC -->
+        <line class="wire" x1="70" y1="40" x2="70" y2="60"></line>
+        <rect class="component" x="60" y="60" width="20" height="56" rx="2"></rect>
+        <line class="wire" x1="70" y1="116" x2="70" y2="205"></line>
+        <text class="label" x="48" y="84" text-anchor="end">RB</text>
+        <text class="label value" x="48" y="100" text-anchor="end">{{ circuit.rb }}</text>
+
+        <!-- base node -->
+        <circle class="node" cx="70" cy="205" r="3"></circle>
+        <line class="wire" x1="70" y1="205" x2="210" y2="205"></line>
+        {% endif %}
 
         <!-- RC -->
         <line class="wire" x1="246" y1="40" x2="246" y2="90"></line>
@@ -138,6 +162,7 @@
         <text class="label value" x="268" y="212">NPN</text>
         <text class="label value" x="268" y="228">&beta; = {{ circuit.beta }}</text>
 
+        {% if mode != "fixed" %}
         <!-- RE -->
         <line class="wire" x1="246" y1="235" x2="246" y2="285"></line>
         <rect class="component" x="236" y="285" width="20" height="56" rx="2"></rect>
@@ -149,6 +174,16 @@
           <line x1="-7" y1="6" x2="7" y2="6"></line>
           <line x1="-3" y1="12" x2="3" y2="12"></line>
         </g>
+        {% else %}
+        <!-- fixed bias: emitter tied straight to ground -->
+        <line class="wire" x1="246" y1="235" x2="246" y2="365"></line>
+        <text class="label" x="266" y="309">Emitter grounded</text>
+        <g class="ground" transform="translate(246,365)">
+          <line x1="-12" y1="0" x2="12" y2="0"></line>
+          <line x1="-7" y1="6" x2="7" y2="6"></line>
+          <line x1="-3" y1="12" x2="3" y2="12"></line>
+        </g>
+        {% endif %}
       </svg>
     </section>
 
@@ -157,7 +192,7 @@
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path>
         </svg>
-        DC Bias Results
+        DC Bias Results &mdash; {{ mode_label }}
       </h2>
 
       {% if result %}

@@ -19,7 +19,7 @@
       </svg>
       <div class="brand-text">
         <h1>Lab 02: BJT DC Bias Web App</h1>
-        <p class="lab-subtitle">ENG29 2121 &ndash; Common Emitter (Voltage Divider Bias)</p>
+        <p class="lab-subtitle">ENG29 2121 &ndash; Common Emitter (Divider / Fixed / Emitter Bias)</p>
       </div>
     </div>
     <div class="course-badge">
@@ -179,7 +179,8 @@
         {% else %}
         <!-- fixed bias: emitter tied straight to ground -->
         <line class="wire" x1="246" y1="235" x2="246" y2="365"></line>
-        <text class="label" x="266" y="309">Emitter grounded</text>
+        <text class="label" x="266" y="303">Emitter</text>
+        <text class="label" x="266" y="317">grounded</text>
         <g class="ground" transform="translate(246,365)">
           <line x1="-12" y1="0" x2="12" y2="0"></line>
           <line x1="-7" y1="6" x2="7" y2="6"></line>

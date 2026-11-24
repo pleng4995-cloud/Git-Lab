@@ -186,5 +186,36 @@ class TestRouteDispatch(unittest.TestCase):
             self.assertIn(text, body)
 
 
+class TestSpiceUi(unittest.TestCase):
+    def setUp(self):
+        self.client = app_module.create_app().test_client()
+        self.form = dict(DIVIDER_FORM)
+
+    def test_engine_bar_always_rendered(self):
+        body = self.client.get("/").get_data(as_text=True)
+        self.assertIn('class="engine-bar', body)
+
+    def test_spice_buttons_hidden_for_fixed_mode(self):
+        body = self.client.get("/?mode=fixed").get_data(as_text=True)
+        self.assertNotIn('name="analysis" value="dc"', body)
+        self.assertIn("Voltage Divider reference only", body)
+
+    def test_spice_buttons_shown_for_divider(self):
+        body = self.client.get("/").get_data(as_text=True)
+        for value in ("dc", "ac", "tran", "analytical"):
+            self.assertIn(f'name="analysis" value="{value}"', body)
+
+    def test_ok_ac_shows_svg_and_units(self):
+        with mock.patch.object(
+            app_module, "run_spice_simulation", return_value=FAKE_AC_OK
+        ):
+            body = self.client.post(
+                "/", data={**self.form, "analysis": "ac"}
+            ).get_data(as_text=True)
+        self.assertIn('class="spice-plot"', body)
+        self.assertIn("Gain (dB)", body)
+        self.assertIn("Phase (deg)", body)
+
+
 if __name__ == "__main__":
     unittest.main()

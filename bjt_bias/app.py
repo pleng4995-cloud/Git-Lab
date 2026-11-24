@@ -350,7 +350,9 @@ def _read_form(form, mode=DEFAULT_MODE):
 
 
 def _bounded_source_number(form, spec):
-    raw = form.get(spec["name"], "")
+    # A crafted POST may omit source fields; fall back to the documented
+    # baseline instead of turning an otherwise valid SPICE run into an error.
+    raw = form.get(spec["name"], spec["default"])
     label = spec["label"]
     value = parse_number(raw, label)
     if not math.isfinite(value):
@@ -382,7 +384,7 @@ def _read_source(form, analysis):
     parsed = {}
     errors = []
     for spec in specs:
-        values[spec["name"]] = form.get(spec["name"], "")
+        values[spec["name"]] = form.get(spec["name"], spec["default"])
         try:
             parsed[spec["name"]] = _bounded_source_number(form, spec)
         except ValueError as error:

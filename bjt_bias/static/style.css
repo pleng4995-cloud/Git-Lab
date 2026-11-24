@@ -588,3 +588,311 @@ button:hover {
     gap: 8px;
   }
 }
+
+/* Lab 04 — engine status, provenance and SPICE results */
+
+.engine-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  font-size: 13px;
+}
+
+.engine-bar.ok {
+  border-color: #b7e1cb;
+  background: #effaf3;
+  color: var(--ok);
+}
+
+.engine-bar.bad {
+  border-color: #f1c7c5;
+  background: #fdf1f0;
+  color: var(--bad);
+}
+
+.engine-bar strong {
+  font-size: 14px;
+}
+
+.engine-bar a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.engine-path {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color: #334155;
+  overflow-wrap: anywhere;
+}
+
+.engine-note {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.provenance-badge {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.provenance-badge.analytical {
+  background: #e0f2f1;
+  color: #0f5f5a;
+  border: 1px solid #b2dfdb;
+}
+
+.provenance-badge.spice {
+  background: #ede9fe;
+  color: #5b21b6;
+  border: 1px solid #ddd6fe;
+}
+
+.provenance-note {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.source-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin: 14px 0 16px;
+  padding: 12px 14px 14px;
+  border: 1px dashed #b8d4e5;
+  border-radius: 10px;
+  background: #f6fbfe;
+}
+
+.source-group legend {
+  padding: 0 6px;
+  color: var(--blue-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.source-field label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.source-field input {
+  width: 100%;
+  margin-top: 3px;
+  padding: 6px 8px;
+  border: 1px solid #cbd8e4;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+}
+
+.analysis-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.analysis-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--teal);
+  border-radius: 8px;
+  background: var(--teal);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.analysis-button svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.analysis-button.spice-button {
+  background: #fff;
+  color: var(--teal-dark);
+}
+
+.analysis-button.active {
+  box-shadow: 0 0 0 2px rgba(15, 124, 138, 0.28);
+}
+
+.analysis-buttons .mode-hint {
+  flex-basis: 100%;
+}
+
+.panel-spice {
+  margin-top: 16px;
+}
+
+.panel-spice h3 {
+  margin: 16px 0 8px;
+  font-size: 14px;
+  color: #17384d;
+}
+
+.run-meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 14px;
+  margin: 0 0 12px;
+  font-size: 12.5px;
+}
+
+.run-meta dt {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.run-meta dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.mono {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.compare-table th,
+.compare-table td {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.compare-table th:first-child,
+.compare-table td:first-child {
+  text-align: left;
+}
+
+.compare-table thead {
+  background: #f1f6fa;
+}
+
+.compare-table tbody tr:nth-child(odd) {
+  background: #fafcfe;
+}
+
+.spice-plot {
+  margin-top: 14px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.spice-plot svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.run-details {
+  margin-top: 14px;
+  font-size: 13px;
+}
+
+.run-details summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--teal-dark);
+}
+
+.run-details pre {
+  max-height: 260px;
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.spice-error {
+  padding: 12px 14px;
+  border: 1px solid #f1c7c5;
+  border-radius: 10px;
+  background: #fdf1f0;
+  color: var(--bad);
+  font-size: 13px;
+}
+
+.spice-error p {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .engine-note {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+
+  .source-group {
+    grid-template-columns: 1fr;
+  }
+
+  .analysis-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .compare-table {
+    min-width: 520px;
+  }
+
+  .run-meta {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .run-meta dd {
+    margin-bottom: 6px;
+  }
+
+  .spice-plot svg {
+    width: 100%;
+  }
+}

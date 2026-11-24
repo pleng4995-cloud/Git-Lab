@@ -1,0 +1,7 @@
+PASS B7B screenshot saved
+PASS B7(b) red engine bar
+PASS B7(b) engine-not-found text
+PASS B7(b) error card shown
+PASS B7(b) error status visible
+PASS B7(b) no plot
+PASS B7(b) no run id

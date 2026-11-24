@@ -1,0 +1,52 @@
+{
+  "B7B": {
+    "results": [
+      [
+        "VB",
+        "1.942 V"
+      ],
+      [
+        "VE",
+        "1.242 V"
+      ],
+      [
+        "VC",
+        "9.294 V"
+      ],
+      [
+        "VCE",
+        "8.052 V"
+      ],
+      [
+        "IB",
+        "12.299 µA"
+      ],
+      [
+        "IC",
+        "1.230 mA"
+      ],
+      [
+        "IE",
+        "1.242 mA"
+      ]
+    ],
+    "compare": [],
+    "run_id": null,
+    "engine_ok": false,
+    "engine_bad": true,
+    "spice_panel": true,
+    "spice_badge": false,
+    "analytical_badge": true,
+    "plot_count": 0,
+    "plot_has_bode_units": false,
+    "plot_has_tran_units": false,
+    "errors": [],
+    "spice_error": "ngspice not found\n      ngspice not found (C:\\does-not-exist\\ngspice.exe (missing))\n      No SPICE values or plots are shown for this run.",
+    "model_visible": false,
+    "mode": null,
+    "run_dir": ".",
+    "engine_version": null,
+    "screenshot": "docs\\evidence\\lab4\\b7b.png",
+    "screenshot_exists": true
+  }
+}

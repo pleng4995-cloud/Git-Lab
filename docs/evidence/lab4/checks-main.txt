@@ -1,0 +1,76 @@
+PASS B1 GET ?mode=divider heading
+PASS B1 GET ?mode=divider shows SPICE buttons
+PASS B1 GET ?mode=fixed heading
+PASS B1 GET ?mode=fixed hides SPICE buttons
+PASS B1 GET ?mode=emitter heading
+PASS B1 GET ?mode=emitter hides SPICE buttons
+PASS B1 screenshot saved
+PASS B1 IC = 1.230
+PASS B1 VCE = 8.052
+PASS B1 analytical badge
+PASS B1 no SPICE panel
+PASS B1-A2 screenshot saved
+PASS B1-A2 IC = 1.130
+PASS B1-A2 VCE = 9.514
+PASS B1-A2 analytical badge
+PASS B1-A2 no SPICE panel
+PASS B1-A3 screenshot saved
+PASS B1-A3 IC = 1.026
+PASS B1-A3 VCE = 8.705
+PASS B1-A3 analytical badge
+PASS B1-A3 no SPICE panel
+PASS B1-A4 screenshot saved
+PASS B1-A4 IC = 0.940
+PASS B1-A4 VCE = 8.033
+PASS B1-A4 analytical badge
+PASS B1-A4 no SPICE panel
+PASS B2 screenshot saved
+PASS B2 SPICE provenance badge
+PASS B2 model 2N3904 visible
+PASS B2 run id visible
+PASS B2 op.txt exists
+PASS B2 seven compare rows
+PASS B2 SPICE IC in 1.2-1.5 mA
+PASS B2 SPICE VCE > 5 V
+PASS B3 screenshot saved
+PASS B3 new run id
+PASS B3 run id differs from B2
+PASS B3 SPICE IC changed by >5%
+PASS B4 screenshot saved
+PASS B4 SPICE panel
+PASS B4 SVG plot rendered
+PASS B4 Bode units
+PASS B4 run id
+PASS B4 ac.txt >= 100 rows
+PASS B5 screenshot saved
+PASS B5 SPICE panel
+PASS B5 SVG plot rendered
+PASS B5 run id
+PASS B5 tran.txt >= 100 rows
+PASS B5 transient units
+PASS B5 Vin/Vout show ~180 deg phase inversion
+PASS B6 screenshot saved
+PASS B6 SPICE panel
+PASS B6 SVG plot rendered
+PASS B6 run id
+PASS B6 tran.txt >= 100 rows
+PASS B6 transient units
+PASS B6 Vout amplitude ~doubled
+PASS B6 run id differs from B5
+PASS B7A screenshot saved
+PASS B7(a) error names RE
+PASS B7(a) no SPICE panel
+PASS B7(a) engine not called
+PASS B7(a) no plot
+PASS B8-DESKTOP screenshot saved
+PASS B8-DESKTOP SPICE panel
+PASS B8-DESKTOP SVG plot rendered
+PASS B8-DESKTOP Bode units
+PASS B8-DESKTOP run id
+PASS B8-DESKTOP ac.txt >= 100 rows
+PASS B8-MOBILE screenshot saved
+PASS B8-MOBILE SPICE panel
+PASS B8-MOBILE SVG plot rendered
+PASS B8-MOBILE Bode units
+PASS B8-MOBILE run id
+PASS B8-MOBILE ac.txt >= 100 rows

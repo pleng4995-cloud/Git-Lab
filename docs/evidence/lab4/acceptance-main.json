@@ -1,0 +1,692 @@
+{
+  "B1": {
+    "results": [
+      [
+        "VB",
+        "1.942 V"
+      ],
+      [
+        "VE",
+        "1.242 V"
+      ],
+      [
+        "VC",
+        "9.294 V"
+      ],
+      [
+        "VCE",
+        "8.052 V"
+      ],
+      [
+        "IB",
+        "12.299 µA"
+      ],
+      [
+        "IC",
+        "1.230 mA"
+      ],
+      [
+        "IE",
+        "1.242 mA"
+      ]
+    ],
+    "compare": [],
+    "run_id": null,
+    "engine_ok": true,
+    "engine_bad": false,
+    "spice_panel": false,
+    "spice_badge": false,
+    "analytical_badge": true,
+    "plot_count": 0,
+    "plot_has_bode_units": false,
+    "plot_has_tran_units": false,
+    "errors": [],
+    "spice_error": "",
+    "model_visible": false,
+    "mode": null,
+    "run_dir": ".",
+    "engine_version": null,
+    "screenshot": "docs\\evidence\\lab4\\b1.png",
+    "screenshot_exists": true,
+    "parsed_values": {
+      "VB": "1.942 V",
+      "VE": "1.242 V",
+      "VC": "9.294 V",
+      "VCE": "8.052 V",
+      "IB": "12.299 µA",
+      "IC": "1.230 mA",
+      "IE": "1.242 mA"
+    }
+  },
+  "B1-A2": {
+    "results": [
+      [
+        "VB",
+        "0.700 V"
+      ],
+      [
+        "VE",
+        "0.000 V"
+      ],
+      [
+        "VC",
+        "9.514 V"
+      ],
+      [
+        "VCE",
+        "9.514 V"
+      ],
+      [
+        "IB",
+        "11.300 µA"
+      ],
+      [
+        "IC",
+        "1.130 mA"
+      ],
+      [
+        "IE",
+        "1.141 mA"
+      ]
+    ],
+    "compare": [],
+    "run_id": null,
+    "engine_ok": true,
+    "engine_bad": false,
+    "spice_panel": false,
+    "spice_badge": false,
+    "analytical_badge": true,
+    "plot_count": 0,
+    "plot_has_bode_units": false,
+    "plot_has_tran_units": false,
+    "errors": [],
+    "spice_error": "",
+    "model_visible": false,
+    "mode": null,
+    "run_dir": ".",
+    "engine_version": null,
+    "screenshot": "docs\\evidence\\lab4\\b1-a2.png",
+    "screenshot_exists": true,
+    "parsed_values": {
+      "VB": "0.700 V",
+      "VE": "0.000 V",
+      "VC": "9.514 V",
+      "VCE": "9.514 V",
+      "IB": "11.300 µA",
+      "IC": "1.130 mA",
+      "IE": "1.141 mA"
+    }
+  },
+  "B1-A3": {
+    "results": [
+      [
+        "VB",
+        "1.737 V"
+      ],
+      [
+        "VE",
+        "1.037 V"
+      ],
+      [
+        "VC",
+        "9.742 V"
+      ],
+      [
+        "VCE",
+        "8.705 V"
+      ],
+      [
+        "IB",
+        "10.263 µA"
+      ],
+      [
+        "IC",
+        "1.026 mA"
+      ],
+      [
+        "IE",
+        "1.037 mA"
+      ]
+    ],
+    "compare": [],
+    "run_id": null,
+    "engine_ok": true,
+    "engine_bad": false,
+    "spice_panel": false,
+    "spice_badge": false,
+    "analytical_badge": true,
+    "plot_count": 0,
+    "plot_has_bode_units": false,
+    "plot_has_tran_units": false,
+    "errors": [],
+    "spice_error": "",
+    "model_visible": false,
+    "mode": null,
+    "run_dir": ".",
+    "engine_version": null,
+    "screenshot": "docs\\evidence\\lab4\\b1-a3.png",
+    "screenshot_exists": true,
+    "parsed_values": {
+      "VB": "1.737 V",
+      "VE": "1.037 V",
+      "VC": "9.742 V",
+      "VCE": "8.705 V",
+      "IB": "10.263 µA",
+      "IC": "1.026 mA",
+      "IE": "1.037 mA"
+    }
+  },
+  "B1-A4": {
+    "results": [
+      [
+        "VB",
+        "2.599 V"
+      ],
+      [
+        "VE",
+        "1.899 V"
+      ],
+      [
+        "VC",
+        "9.932 V"
+      ],
+      [
+        "VCE",
+        "8.033 V"
+      ],
+      [
+        "IB",
+        "9.401 µA"
+      ],
+      [
+        "IC",
+        "0.940 mA"
+      ],
+      [
+        "IE",
+        "0.950 mA"
+      ]
+    ],
+    "compare": [],
+    "run_id": null,
+    "engine_ok": true,
+    "engine_bad": false,
+    "spice_panel": false,
+    "spice_badge": false,
+    "analytical_badge": true,
+    "plot_count": 0,
+    "plot_has_bode_units": false,
+    "plot_has_tran_units": false,
+    "errors": [],
+    "spice_error": "",
+    "model_visible": false,
+    "mode": null,
+    "run_dir": ".",
+    "engine_version": null,
+    "screenshot": "docs\\evidence\\lab4\\b1-a4.png",
+    "screenshot_exists": true,
+    "parsed_values": {
+      "VB": "2.599 V",
+      "VE": "1.899 V",
+      "VC": "9.932 V",
+      "VCE": "8.033 V",
+      "IB": "9.401 µA",
+      "IC": "0.940 mA",
+      "IE": "0.950 mA"
+    }
+  },
+  "B2": {
+    "results": [
+      [
+        "VB",
+        "1.942 V"
+      ],
+      [
+        "VE",
+        "1.242 V"
+      ],
+      [
+        "VC",
+        "9.294 V"
+      ],
+      [
+        "VCE",
+        "8.052 V"
+      ],
+      [
+        "IB",
+        "12.299 µA"
+      ],
+      [
+        "IC",
+        "1.230 mA"
+      ],
+      [
+        "IE",
+        "1.242 mA"
+      ]
+    ],
+    "compare": {
+      "VB": [
+        "1.942 V",
+        "2.004 V",
+        "+0.062 V"
+      ],
+      "VE": [
+        "1.242 V",
+        "1.333 V",
+        "+0.091 V"
+      ],
+      "VC": [
+        "9.294 V",
+        "9.087 V",
+        "-0.207 V"
+      ],
+      "VCE": [
+        "8.052 V",
+        "7.754 V",
+        "-0.298 V"
+      ],
+      "IB": [
+        "12.299 µA",
+        "8.887 µA",
+        "-3.411 µA"
+      ],
+      "IC": [
+        "1.230 mA",
+        "1.324 mA",
+        "+0.094 mA"
+      ],
+      "IE": [
+        "1.242 mA",
+        "-1.333 mA",
+        "-2.575 mA"
+      ]
+    },
+    "run_id": "20261124T173313-329026",
+    "engine_ok": true,
+    "engine_bad": false,
+    "spice_panel": true,
+    "spice_badge": true,
+    "analytical_badge": true,
+    "plot_count": 0,
+    "plot_has_bode_units": false,
+    "plot_has_tran_units": false,
+    "errors": [],
+    "spice_error": "",
+    "model_visible": true,
+    "mode": null,
+    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T173313-329026",
+    "engine_version": "ngspice-47",
+    "screenshot": "docs\\evidence\\lab4\\b2.png",
+    "screenshot_exists": true
+  },
+  "B3": {
+    "results": [
+      [
+        "VB",
+        "2.044 V"
+      ],
+      [
+        "VE",
+        "1.344 V"
+      ],
+      [
+        "VC",
+        "10.536 V"
+      ],
+      [
+        "VCE",
+        "9.192 V"
+      ],
+      [
+        "IB",
+        "6.653 µA"
+      ],
+      [
+        "IC",
+        "0.665 mA"
+      ],
+      [
+        "IE",
+        "0.672 mA"
+      ]
+    ],
+    "compare": {
+      "VB": [
+        "2.044 V",
+        "2.073 V",
+        "+0.029 V"
+      ],
+      "VE": [
+        "1.344 V",
+        "1.419 V",
+        "+0.075 V"
+      ],
+      "VC": [
+        "10.536 V",
+        "10.450 V",
+        "-0.086 V"
+      ],
+      "VCE": [
+        "9.192 V",
+        "9.032 V",
+        "-0.161 V"
+      ],
+      "IB": [
+        "6.653 µA",
+        "5.065 µA",
+        "-1.589 µA"
+      ],
+      "IC": [
+        "0.665 mA",
+        "0.705 mA",
+        "+0.040 mA"
+      ],
+      "IE": [
+        "0.672 mA",
+        "-0.710 mA",
+        "-1.382 mA"
+      ]
+    },
+    "run_id": "20261124T173315-d7738c",
+    "engine_ok": true,
+    "engine_bad": false,
+    "spice_panel": true,
+    "spice_badge": true,
+    "analytical_badge": true,
+    "plot_count": 0,
+    "plot_has_bode_units": false,
+    "plot_has_tran_units": false,
+    "errors": [],
+    "spice_error": "",
+    "model_visible": true,
+    "mode": null,
+    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T173315-d7738c",
+    "engine_version": "ngspice-47",
+    "screenshot": "docs\\evidence\\lab4\\b3.png",
+    "screenshot_exists": true
+  },
+  "B4": {
+    "results": [
+      [
+        "VB",
+        "1.942 V"
+      ],
+      [
+        "VE",
+        "1.242 V"
+      ],
+      [
+        "VC",
+        "9.294 V"
+      ],
+      [
+        "VCE",
+        "8.052 V"
+      ],
+      [
+        "IB",
+        "12.299 µA"
+      ],
+      [
+        "IC",
+        "1.230 mA"
+      ],
+      [
+        "IE",
+        "1.242 mA"
+      ]
+    ],
+    "compare": [],
+    "run_id": "20261124T173317-4abbab",
+    "engine_ok": true,
+    "engine_bad": false,
+    "spice_panel": true,
+    "spice_badge": true,
+    "analytical_badge": true,
+    "plot_count": 1,
+    "plot_has_bode_units": true,
+    "plot_has_tran_units": false,
+    "errors": [],
+    "spice_error": "",
+    "model_visible": true,
+    "mode": null,
+    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T173317-4abbab",
+    "engine_version": "ngspice-47",
+    "screenshot": "docs\\evidence\\lab4\\b4.png",
+    "screenshot_exists": true,
+    "ac_rows": 101
+  },
+  "B5": {
+    "results": [
+      [
+        "VB",
+        "1.942 V"
+      ],
+      [
+        "VE",
+        "1.242 V"
+      ],
+      [
+        "VC",
+        "9.294 V"
+      ],
+      [
+        "VCE",
+        "8.052 V"
+      ],
+      [
+        "IB",
+        "12.299 µA"
+      ],
+      [
+        "IC",
+        "1.230 mA"
+      ],
+      [
+        "IE",
+        "1.242 mA"
+      ]
+    ],
+    "compare": [],
+    "run_id": "20261124T173318-a2928f",
+    "engine_ok": true,
+    "engine_bad": false,
+    "spice_panel": true,
+    "spice_badge": true,
+    "analytical_badge": true,
+    "plot_count": 1,
+    "plot_has_bode_units": false,
+    "plot_has_tran_units": true,
+    "errors": [],
+    "spice_error": "",
+    "model_visible": true,
+    "mode": null,
+    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T173318-a2928f",
+    "engine_version": "ngspice-47",
+    "screenshot": "docs\\evidence\\lab4\\b5.png",
+    "screenshot_exists": true,
+    "tran_rows": 1008,
+    "vout_pp_v": 0.0351139824,
+    "vin_vout_correlation": -1.0
+  },
+  "B6": {
+    "results": [
+      [
+        "VB",
+        "1.942 V"
+      ],
+      [
+        "VE",
+        "1.242 V"
+      ],
+      [
+        "VC",
+        "9.294 V"
+      ],
+      [
+        "VCE",
+        "8.052 V"
+      ],
+      [
+        "IB",
+        "12.299 µA"
+      ],
+      [
+        "IC",
+        "1.230 mA"
+      ],
+      [
+        "IE",
+        "1.242 mA"
+      ]
+    ],
+    "compare": [],
+    "run_id": "20261124T173321-77db86",
+    "engine_ok": true,
+    "engine_bad": false,
+    "spice_panel": true,
+    "spice_badge": true,
+    "analytical_badge": true,
+    "plot_count": 1,
+    "plot_has_bode_units": false,
+    "plot_has_tran_units": true,
+    "errors": [],
+    "spice_error": "",
+    "model_visible": true,
+    "mode": null,
+    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T173321-77db86",
+    "engine_version": "ngspice-47",
+    "screenshot": "docs\\evidence\\lab4\\b6.png",
+    "screenshot_exists": true,
+    "tran_rows": 1008,
+    "vout_pp_v": 0.0702278849,
+    "vout_pp_before_v": 0.0351139824
+  },
+  "B7A": {
+    "results": [],
+    "compare": [],
+    "run_id": null,
+    "engine_ok": true,
+    "engine_bad": false,
+    "spice_panel": false,
+    "spice_badge": false,
+    "analytical_badge": true,
+    "plot_count": 0,
+    "plot_has_bode_units": false,
+    "plot_has_tran_units": false,
+    "errors": [
+      "RE must be a finite number greater than zero."
+    ],
+    "spice_error": "",
+    "model_visible": false,
+    "mode": null,
+    "run_dir": ".",
+    "engine_version": null,
+    "screenshot": "docs\\evidence\\lab4\\b7a.png",
+    "screenshot_exists": true
+  },
+  "B8-DESKTOP": {
+    "results": [
+      [
+        "VB",
+        "1.942 V"
+      ],
+      [
+        "VE",
+        "1.242 V"
+      ],
+      [
+        "VC",
+        "9.294 V"
+      ],
+      [
+        "VCE",
+        "8.052 V"
+      ],
+      [
+        "IB",
+        "12.299 µA"
+      ],
+      [
+        "IC",
+        "1.230 mA"
+      ],
+      [
+        "IE",
+        "1.242 mA"
+      ]
+    ],
+    "compare": [],
+    "run_id": "20261124T173325-60be65",
+    "engine_ok": true,
+    "engine_bad": false,
+    "spice_panel": true,
+    "spice_badge": true,
+    "analytical_badge": true,
+    "plot_count": 1,
+    "plot_has_bode_units": true,
+    "plot_has_tran_units": false,
+    "errors": [],
+    "spice_error": "",
+    "model_visible": true,
+    "mode": null,
+    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T173325-60be65",
+    "engine_version": "ngspice-47",
+    "screenshot": "docs\\evidence\\lab4\\b8-desktop.png",
+    "screenshot_exists": true,
+    "ac_rows": 101
+  },
+  "B8-MOBILE": {
+    "results": [
+      [
+        "VB",
+        "1.942 V"
+      ],
+      [
+        "VE",
+        "1.242 V"
+      ],
+      [
+        "VC",
+        "9.294 V"
+      ],
+      [
+        "VCE",
+        "8.052 V"
+      ],
+      [
+        "IB",
+        "12.299 µA"
+      ],
+      [
+        "IC",
+        "1.230 mA"
+      ],
+      [
+        "IE",
+        "1.242 mA"
+      ]
+    ],
+    "compare": [],
+    "run_id": "20261124T173327-fa7481",
+    "engine_ok": true,
+    "engine_bad": false,
+    "spice_panel": true,
+    "spice_badge": true,
+    "analytical_badge": true,
+    "plot_count": 1,
+    "plot_has_bode_units": true,
+    "plot_has_tran_units": false,
+    "errors": [],
+    "spice_error": "",
+    "model_visible": true,
+    "mode": null,
+    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T173327-fa7481",
+    "engine_version": "ngspice-47",
+    "screenshot": "docs\\evidence\\lab4\\b8-mobile.png",
+    "screenshot_exists": true,
+    "ac_rows": 101
+  }
+}

@@ -131,3 +131,107 @@ VCE = 9.93178 − 1.89900 = 8.03278 V
 **A5 — Fixed, RB = 0**
 
 `IB = (12 − 0.70) / 0` ไม่นิยาม → ต้องถูกปฏิเสธที่ชั้นตรวจอินพุตด้วยข้อความที่ระบุ RB
+
+---
+
+# Lab 04 — CE Voltage-Divider Simulator (SPICE)
+
+ส่วนนี้เป็นผลตรวจจริงจาก ngspice ที่รันผ่านหน้าเว็บ (ไม่ใช่ค่าที่คำนวณแทน)
+ค่า Analytical กับ SPICE ถูกแสดงคนละป้ายเสมอ เพราะใช้สมมติฐานคนละชุด
+
+## สภาพแวดล้อมที่ตรวจ
+
+| รายการ | เวอร์ชัน / ค่าที่ตรวจได้ |
+|---|---|
+| OS | Windows 11, `10.0.26300.0` (display version `26H2`) |
+| Python | `3.14.10` (64-bit) |
+| Flask | `3.1.3` (dependency เดียวใน `requirements.txt`) |
+| SPICE engine | ngspice-47 — `C:\Tools\ngspice-47\bin\ngspice_con.exe`, คำสั่ง `--version` ขึ้น `** ngspice-47` |
+| BJT model | `2N3904` (`.model Q2N3904 NPN`) ใน `bjt_bias/spice_models/2n3904.lib` |
+| Model SHA256 | `E3B36B89C491C09E24986692E556095403E3D4CCE1EEB1A71DA06DAEA3C5E589` |
+| Browser | Microsoft Edge `--headless=new` (`--dump-dom`, `--screenshot`) |
+| Repo | <https://github.com/pleng4995-cloud/Git-Lab.git> |
+| Commit ของ Lab 04 | [`c9011ab`](https://github.com/pleng4995-cloud/Git-Lab/commit/c9011abb74d51dd46ff7a508667dc6b032539523) (`c9011abb74d51dd46ff7a508667dc6b032539523`) |
+
+ที่มาของ model: ไม่มี Instructor Starter Kit ในเครื่องนี้ จึงใช้ 2N3904 model
+card ที่เผยแพร่สาธารณะ (ON Semiconductor / Motorola, `Is=6.734f`, `BF=416.4`,
+`VAF=74.03`) — ตรวจ sources และวิธีเปลี่ยน model ได้ใน
+[`bjt_bias/spice_models/README.md`](../bjt_bias/spice_models/README.md) model
+**ไม่ได้**ถูก fit ให้ตรงกับผล Analytical
+
+## วงจรอ้างอิง (baseline v1)
+
+VCC 12 V · R1 100 kΩ · R2 22 kΩ · RC 2.2 kΩ · RE 1 kΩ · RL 10 kΩ ·
+Cin = Cout = 10 µF · แหล่งสัญญาณ 10 mV peak @ 1 kHz · **ไม่ใส่ emitter bypass
+capacitor** (`CE`) ตามใบงาน v1 — จุดวัด Vin คือโหนด `vin` ฝั่งแหล่งสัญญาณก่อน
+Cin, Vout คือโหนด `out` หลัง Cout คร่อม RL
+
+## ค่าอ้างอิงอิสระของ AC / Transient (คำนวณมือ ก่อนรัน)
+
+```
+IE   ≈ 1.242 mA  (ค่าจาก A1, β=100, VBE=0.70 V)
+re   = VT / IE = 25.85 mV / 1.242 mA ≈ 20.8 Ω
+RC ∥ RL = 2.2 kΩ ∥ 10 kΩ = 1803 Ω
+|Av| ≈ (RC ∥ RL) / (RE + re) = 1803 / (1000 + 20.8) ≈ 1.77
+      → 20·log10(1.77) ≈ 4.95 dB, เฟสกลับ ≈ 180° (CE ไม่มี bypass)
+Vout ≈ 1.77 × 10 mV ≈ 17.7 mV peak → ≈ 35 mV p-p
+fCout = 1 / (2π·(RC+RL)·Cout) = 1 / (2π·12.2 kΩ·10 µF) ≈ 1.30 Hz
+fCin  = 1 / (2π·Rin·Cin), Rin ≈ R1∥R2∥(rπ + (β+1)·RE)  (หลัก Hz ต่ำ ๆ)
+```
+
+ค่าที่รันจริงต้องอยู่ในอันดับเดียวกันนี้ (gain หลักหน่วย ไม่ใช่หลักร้อย ถ้าได้
+หลักร้อยแปลว่ามี bypass capacitor ซึ่งไม่มีใน baseline) หมายเหตุ: Analytical
+ใช้ β/VBE คงที่จาก `bjt_bias/bias.py` ส่วน SPICE ใช้ model card ที่มี `BF=416.4`
+และ VBE แปรตามกระแส — **ไม่ต้องเท่ากัน** และไม่ได้นำค่าข้างหนึ่งไปแทนอีกข้าง
+
+## ผลตรวจ B1–B8 (เบราว์เซอร์จริง)
+
+| Case | Method | Input | Expected / Reference | Observed | Evidence | Status |
+|---|---|---|---|---|---|---|
+| B1 | Edge POST `analysis=analytical` สลับ 3 โหมด | A1–A4 ของ Lab 03 | IC/VCE = 1.230/8.052, 1.130/9.514, 1.026/8.705, 0.940/8.033 mA/V | ตรงทั้ง 4 ชุด · มี `ANALYTICAL · bias.py` · ไม่มี SPICE panel | [`b1.png`](evidence/lab4/b1.png), [`b1-a2.png`](evidence/lab4/b1-a2.png), [`b1-a3.png`](evidence/lab4/b1-a3.png), [`b1-a4.png`](evidence/lab4/b1-a4.png) | **PASS** |
+| B2 | Edge POST `analysis=dc` | baseline | SPICE `.op` แยกจาก Analytical + model/run id/status ok | run `20261124T174238-ddc674` · ngspice-47 · VB 1.942→2.004 V, VE 1.242→1.333 V, VC 9.294→9.087 V, VCE 8.052→7.754 V, IB 12.299→8.887 µA, IC 1.230→1.324 mA, IE 1.242→−1.333 mA (Analytical→SPICE; เครื่องหมาย IE ติดลบเป็น sign convention ของ ngspice) | [`b2.png`](evidence/lab4/b2.png), [`b2-netlist.cir`](evidence/lab4/b2-netlist.cir), [`b2-op.txt`](evidence/lab4/b2-op.txt), [`acceptance-main.json`](evidence/lab4/acceptance-main.json) | **PASS** |
+| B3 | Edge POST `analysis=dc` หลังเปลี่ยน RE | RE 1 kΩ → 2 kΩ | IC/VE/VCE เปลี่ยนและ run id ใหม่ | IC 1.324→0.705 mA, VE 1.333→1.419 V, VCE 7.754→9.032 V · run `20261124T174239-d9342c` ≠ B2 | [`b3.png`](evidence/lab4/b3.png), [`b3-netlist.cir`](evidence/lab4/b3-netlist.cir), [`b3-op.txt`](evidence/lab4/b3-op.txt) | **PASS** |
+| B4 | Edge POST `analysis=ac` | 10 Hz–1 MHz, 20 pts/dec | Bode log-x + gain dB + phase deg + run id, gain ≈ 4.95 dB | 101 rows · @1 kHz = 4.8896 dB / −179.87° · run `20261124T174241-a9d073` | [`b4.png`](evidence/lab4/b4.png), [`b4-netlist.cir`](evidence/lab4/b4-netlist.cir), [`b4-ac.txt`](evidence/lab4/b4-ac.txt) | **PASS** |
+| B5 | Edge POST `analysis=tran` | 10 mV peak, 1 kHz | กลับเฟส ≈180°, Vout p-p ≈ 35 mV | 1008 rows · corr(Vin,Vout) = −1.0 · Vout p-p = 0.0351139824 V · run `20261124T174243-13be6c` | [`b5.png`](evidence/lab4/b5.png), [`b5-netlist.cir`](evidence/lab4/b5-netlist.cir), [`b5-tran.txt`](evidence/lab4/b5-tran.txt) | **PASS** |
+| B6 | Edge POST `analysis=tran` หลังเปลี่ยน amplitude | 10 → 20 mV | Vout ≈ 2× เดิม, run id ใหม่ | Vout p-p = 0.0702278849 V (2.000×) · 1008 rows · run `20261124T174245-50c2b3` ≠ B5 | [`b6.png`](evidence/lab4/b6.png), [`b6-netlist.cir`](evidence/lab4/b6-netlist.cir), [`b6-tran.txt`](evidence/lab4/b6-tran.txt) | **PASS** |
+| B7(a) | Edge POST `RE = 0` | `analysis=dc`, RE 0 | error ระบุ RE, ไม่เรียก engine, ไม่มีกราฟ | `RE must be a finite number greater than zero.` · ไม่มี SPICE panel / run id / plot | [`b7a.png`](evidence/lab4/b7a.png), [`b7a-error.txt`](evidence/lab4/b7a-error.txt) | **PASS** |
+| B7(b) | รีสตาร์ท Flask ด้วย `NGSPICE_BIN` ผิด แล้ว Edge POST | `NGSPICE_BIN=C:\does-not-exist\ngspice.exe`, port 5001 | engine_missing badge แดง + วิธีติดตั้ง, ไม่มีกราฟ | engine bar แดง · `ngspice not found (C:\does-not-exist\ngspice.exe (missing))` · ไม่มี run id / plot | [`b7b.png`](evidence/lab4/b7b.png), [`b7b-error.txt`](evidence/lab4/b7b-error.txt), [`acceptance-b7b.json`](evidence/lab4/acceptance-b7b.json) | **PASS** |
+| B8 | Edge POST `analysis=ac` สองขนาดหน้าต่าง | desktop 1280×1400, mobile 390×900 | กราฟ/หน่วย/ปุ่มไม่ถูกตัด, ตารางเลื่อนได้ | SVG + `Gain (dB)` / `Phase (deg)` / `Frequency (Hz)` อยู่ใน DOM ทั้งสองขนาด · desktop run `20261124T174248-1be2f6`, mobile run `20261124T174250-4f2564` | [`b8-desktop.png`](evidence/lab4/b8-desktop.png), [`b8-mobile.png`](evidence/lab4/b8-mobile.png), netlist/AC excerpt: [`desktop`](evidence/lab4/b8-desktop-netlist.cir) · [`mobile`](evidence/lab4/b8-mobile-netlist.cir) | **PASS** (DOM proxy; ตรวจภาพด้วยตาโดยนักศึกษา — ตารางด้านล่าง) |
+
+สคริปต์ที่ทำซ้ำได้: [`scripts/browser_acceptance_lab4.py`](../scripts/browser_acceptance_lab4.py)
+ผลลัพธ์: **76/76 checks PASS** (หลัก) และ **7/7 checks PASS** (B7(b)) — ดู
+[`checks-main.txt`](evidence/lab4/checks-main.txt) และ
+[`checks-b7b.txt`](evidence/lab4/checks-b7b.txt) วิธีจำลอง engine ไม่พร้อมคือ
+ตั้ง `NGSPICE_BIN` ให้ชี้ path ที่ไม่มี **ไม่ได้ปิด ngspice จริงทั้งเครื่อง**
+
+หลักฐานเพิ่มเติมใน `docs/evidence/lab4/`: netlist ที่รันจริง (`*-netlist.cir`),
+excerpt ของ `op.txt` / `ac.txt` / `tran.txt` (`b2-op.txt`, `b4-ac.txt`,
+`b5-tran.txt` ฯลฯ) และข้อความ error ของ B7 (`b7a-error.txt`, `b7b-error.txt`)
+สคริปต์ถ่าย screenshot จาก DOM snapshot ของ **POST เดียวกัน** (ไม่ได้โพสต์ซ้ำ)
+จึงทำให้ run id ในตารางตรงกับสิ่งที่ปรากฏในภาพทุกครั้ง
+
+## เครื่องมือตรวจ และเหตุผลที่ไม่ใช้ Playwright MCP / Impeccable
+
+ใช้ Microsoft Edge headless เพราะเครื่องนี้ไม่มี `node`/`npx` (ตรวจแล้วได้
+`CommandNotFoundException`) ทำให้ MCP server `playwright` ใน `opencode.json`
+เริ่มไม่ได้ และไม่มี Google Chrome ที่ path มาตรฐาน Edge เป็น Chromium engine
+ตัวเดียวกับที่ Playwright ใช้ จึงยังเป็นการ POST จริงผ่านเบราว์เซอร์ + อ่าน DOM
++ บันทึก screenshot เหมือนเดิม (อธิบายเพิ่มในส่วน Lab 03 ด้านบน)
+
+ไม่ใช้ Impeccable/skill ตรวจภาพ เพราะไม่มี browser tool แบบ interactive ที่
+เสียบเข้ากับ MCP ได้ และโมเดลนี้ไม่สามารถอ่านไฟล์ PNG ที่ screenshot ไว้ได้
+จึงใช้ **DOM assertion เป็น proxy** สำหรับ B8 แล้วทิ้งภาพไว้ให้ตรวจด้วยตาอีกรอบ
+
+### Manual audit โดยนักศึกษา (ยังไม่กรอก — อย่าให้ AI แทน)
+
+เปิด <http://127.0.0.1:5000/> ด้วยเบราว์เซอร์ของตัวเอง กด **Run SPICE DC**,
+**Run AC sweep**, **Run Transient** แล้วเทียบกับตาราง B2/B4/B5 และลดขนาด
+หน้าต่างเหลือ ~390 px สำหรับ B8
+
+| วันที่ | กรณี | สิ่งที่เห็นเอง | ตรงตามตาราง | หมายเหตุ |
+|---|---|---|---|---|
+|  | Lab 03 A2 |  |  | (ยังค้างจากส่วน Lab 03) |
+|  | Lab 04 B2 |  |  |  |
+|  | Lab 04 B4 |  |  |  |
+|  | Lab 04 B5 |  |  |  |
+|  | Lab 04 B8 mobile |  |  |  |

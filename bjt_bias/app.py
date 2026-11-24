@@ -1,7 +1,11 @@
 """Flask web interface for the BJT common-emitter DC bias analysis."""
 
+import math
+
 from flask import Flask, render_template, request
 
+from bjt_bias import plots as plot_module
+from bjt_bias import spice_engine
 from bjt_bias.bias import (
     OPERATING_POINT_FIELDS,
     VCE_SAT_V,
@@ -20,6 +24,64 @@ MODE_LABELS = {
     "emitter": "Emitter Bias",
 }
 DEFAULT_MODE = "divider"
+
+# (value, label). The button itself submits ``analysis`` so no JavaScript is
+# needed, and a POST without the field stays analytical (Lab 03 behaviour).
+ANALYSES = (
+    ("analytical", "Analytical DC only"),
+    ("dc", "Run SPICE DC"),
+    ("ac", "Run AC sweep"),
+    ("tran", "Run Transient"),
+)
+
+SOURCE_SPECS = (
+    {
+        "name": "amplitude_mv",
+        "label": "Amplitude (mV peak)",
+        "default": "10",
+        "hint": "Transient only",
+        "min": 0.001,
+        "max": 1000.0,
+        "analyses": ("tran",),
+    },
+    {
+        "name": "frequency_hz",
+        "label": "Frequency (Hz)",
+        "default": "1000",
+        "hint": "Transient only",
+        "min": 1.0,
+        "max": 1e6,
+        "analyses": ("tran",),
+    },
+    {
+        "name": "ac_start_hz",
+        "label": "AC start (Hz)",
+        "default": "10",
+        "hint": "AC sweep only",
+        "min": 0.1,
+        "max": 1e9,
+        "analyses": ("ac",),
+    },
+    {
+        "name": "ac_stop_hz",
+        "label": "AC stop (Hz)",
+        "default": "1000000",
+        "hint": "AC sweep only",
+        "min": 0.1,
+        "max": 1e9,
+        "analyses": ("ac",),
+    },
+    {
+        "name": "ac_points_dec",
+        "label": "AC points/decade",
+        "default": "20",
+        "hint": "AC sweep only",
+        "min": 5.0,
+        "max": 200.0,
+        "analyses": ("ac",),
+    },
+)
+DEFAULT_SOURCE_VALUES = {spec["name"]: spec["default"] for spec in SOURCE_SPECS}
 
 FIELDS = (
     {
@@ -287,6 +349,120 @@ def _read_form(form, mode=DEFAULT_MODE):
     return values, units, parsed, errors
 
 
+def _bounded_source_number(form, spec):
+    raw = form.get(spec["name"], "")
+    label = spec["label"]
+    value = parse_number(raw, label)
+    if not math.isfinite(value):
+        raise ValueError(f"{label} must be a finite number.")
+    if value < spec["min"] or value > spec["max"]:
+        raise ValueError(
+            f"{label} must be between {spec['min']:g} and {spec['max']:g}."
+        )
+    return value
+
+
+def _resolve_analysis(raw):
+    """Return ``(analysis, error)``; a missing value means analytical."""
+    value = (raw or "").strip().lower()
+    if not value:
+        return "analytical", None
+    if value in {key for key, _label in ANALYSES}:
+        return value, None
+    return "analytical", f"Unknown analysis: '{raw}'."
+
+
+def _read_source(form, analysis):
+    """Validate only the source/sweep fields used by ``analysis``."""
+    if analysis not in ("ac", "tran"):
+        return {}, {}, []
+
+    specs = [spec for spec in SOURCE_SPECS if analysis in spec["analyses"]]
+    values = {}
+    parsed = {}
+    errors = []
+    for spec in specs:
+        values[spec["name"]] = form.get(spec["name"], "")
+        try:
+            parsed[spec["name"]] = _bounded_source_number(form, spec)
+        except ValueError as error:
+            errors.append(str(error))
+
+    if analysis == "tran":
+        frequency = parsed.get("frequency_hz")
+        if frequency and frequency > 0:
+            stop_s = 5.0 / frequency
+            if stop_s > 2.0:
+                errors.append(
+                    f"At {frequency:g} Hz, 5 cycles would take {stop_s:.3f} s; "
+                    "increase frequency so 5/f is at most 2 s."
+                )
+        if not errors:
+            parsed = {
+                "amplitude_v": parsed["amplitude_mv"] / 1000.0,
+                "frequency_hz": parsed["frequency_hz"],
+            }
+    else:
+        start = parsed.get("ac_start_hz")
+        stop = parsed.get("ac_stop_hz")
+        if start and stop and stop <= start:
+            errors.append(
+                f"ac_stop_hz must be greater than ac_start_hz ({start:g} Hz)."
+            )
+
+    return values, parsed, errors
+
+
+def _spice_circuit(parsed, source):
+    """Build the SPICE circuit from validated bias values and source settings."""
+    circuit = dict(spice_engine.CIRCUIT_DEFAULTS)
+    for key in ("vcc", "r1", "r2", "rc", "re"):
+        if key in parsed:
+            circuit[key] = float(parsed[key])
+    for key in (
+        "amplitude_v",
+        "frequency_hz",
+        "ac_start_hz",
+        "ac_stop_hz",
+        "ac_points_dec",
+    ):
+        if source and key in source:
+            circuit[key] = float(source[key])
+    return circuit
+
+
+def engine_status():
+    """Return the cached ngspice discovery result for the status bar."""
+    return spice_engine.locate_engine()
+
+
+def run_spice_simulation(circuit, analysis):
+    """Run one SPICE analysis and attach plots only for a fully valid result."""
+    result = spice_engine.run_analysis(circuit, analysis)
+    drawings = {}
+    if result["status"] == "ok":
+        data = result["data"]
+        try:
+            if analysis == "ac":
+                drawings["bode"] = plot_module.bode_svg(
+                    data["freq_hz"], data["gain_db"], data["phase_deg"],
+                    run_id=result["run_id"],
+                )
+            elif analysis == "tran":
+                drawings["transient"] = plot_module.transient_svg(
+                    data["time_s"], data["vin_v"], data["vout_v"],
+                    run_id=result["run_id"],
+                )
+        except (KeyError, ValueError) as error:
+            result["status"] = "parse_error"
+            result["data"] = {}
+            result["stderr_tail"] = (
+                result["stderr_tail"] + f"\nplot render failed: {error}"
+            ).strip()
+    result["plots"] = drawings
+    return result
+
+
 def _analyze(mode, parsed):
     """Dispatch to the model selected by ``mode``."""
     if mode == "divider":
@@ -298,7 +474,21 @@ def _analyze(mode, parsed):
     raise ValueError(f"Unknown bias mode: '{mode}'.")
 
 
-def page_context(fields, errors, result, parsed, mode=DEFAULT_MODE):
+def page_context(
+    fields,
+    errors,
+    result,
+    parsed,
+    mode=DEFAULT_MODE,
+    *,
+    analysis="analytical",
+    analysis_options=ANALYSES,
+    source_fields=SOURCE_SPECS,
+    source_values=None,
+    engine=None,
+    spice=None,
+    spice_plots=None,
+):
     """Build the template context shared by the GET and POST responses."""
     return {
         "fields": fields,
@@ -315,6 +505,13 @@ def page_context(fields, errors, result, parsed, mode=DEFAULT_MODE):
         "mode_options": [
             (key, spec["label"]) for key, spec in MODES.items()
         ],
+        "analysis": analysis,
+        "analysis_options": analysis_options,
+        "source_fields": source_fields,
+        "source_values": source_values or dict(DEFAULT_SOURCE_VALUES),
+        "engine": engine,
+        "spice": spice,
+        "spice_plots": spice_plots or {},
     }
 
 
@@ -326,20 +523,29 @@ def create_app():
     def index():
         if request.method == "GET":
             mode, mode_error = _resolve_mode(request.args.get("mode"))
+            analysis, analysis_error = _resolve_analysis(request.args.get("analysis"))
             values = {spec["name"]: spec["default_value"] for spec in FIELDS}
             units = {spec["name"]: spec["default_unit"] for spec in FIELDS}
+            errors = [error for error in (mode_error, analysis_error) if error]
             return render_template(
                 "index.html",
                 **page_context(
                     _form_fields(values, units, mode),
-                    [mode_error] if mode_error else [],
+                    errors,
                     None,
                     DEFAULT_INPUTS,
                     mode,
+                    analysis=analysis,
+                    engine=engine_status(),
                 ),
             )
 
         mode, mode_error = _resolve_mode(request.form.get("mode"))
+        analysis, analysis_error = _resolve_analysis(request.form.get("analysis"))
+        source_values, source, source_errors = _read_source(request.form, analysis)
+        errors = [error for error in (mode_error, analysis_error) if error]
+        errors.extend(source_errors)
+
         if mode_error:
             values = {
                 spec["name"]: request.form.get(spec["name"], "")
@@ -349,19 +555,43 @@ def create_app():
                 spec["name"]: request.form.get(f"{spec['name']}_unit", "")
                 for spec in FIELDS
             }
-            parsed, errors = {}, [mode_error]
+            parsed = {}
         else:
-            values, units, parsed, errors = _read_form(request.form, mode)
+            values, units, parsed, form_errors = _read_form(request.form, mode)
+            errors.extend(form_errors)
+
+        if analysis != "analytical" and mode != "divider":
+            errors.append(
+                "SPICE analysis is available for the Voltage Divider reference only."
+            )
+
         result = None
+        spice = None
+        spice_plots = {}
         if not errors:
             try:
                 result = _analyze(mode, parsed)
             except ValueError as error:
                 errors.append(str(error))
+            if analysis != "analytical" and not errors:
+                spice = run_spice_simulation(
+                    _spice_circuit(parsed, source), analysis
+                )
+                spice_plots = spice.get("plots", {}) or {}
+
         return render_template(
             "index.html",
             **page_context(
-                _form_fields(values, units, mode), errors, result, parsed, mode
+                _form_fields(values, units, mode),
+                errors,
+                result,
+                parsed,
+                mode,
+                analysis=analysis,
+                source_values=source_values,
+                engine=engine_status(),
+                spice=spice,
+                spice_plots=spice_plots,
             ),
         )
 

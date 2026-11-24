@@ -2,7 +2,17 @@
 
 from __future__ import annotations
 
+import functools
+import hashlib
+import json
 import math
+import os
+import re
+import secrets
+import shutil
+import subprocess
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 MODEL_NAME = "2N3904"
@@ -213,3 +223,299 @@ def parse_tran_safe(text: str) -> dict:
         )
     _check_increasing(data["time_s"], "transient time")
     return data
+
+
+RUNS_ROOT = Path(__file__).resolve().parent.parent / "runs"
+RESULT_FILES = {"dc": "op.txt", "ac": "ac.txt", "tran": "tran.txt"}
+PARSERS = {"dc": parse_op, "ac": parse_ac_safe, "tran": parse_tran_safe}
+MAX_RESULT_BYTES = 20 * 1024 * 1024
+MAX_RESULT_LINES = 200_000
+MAX_RUNS = 50
+TAIL_LINES = 40
+
+
+def _model_info() -> dict:
+    return {
+        "name": MODEL_NAME,
+        "spice_name": SPICE_MODEL_NAME,
+        "file": MODEL_PATH.name,
+        "sha256": hashlib.sha256(MODEL_PATH.read_bytes()).hexdigest(),
+    }
+
+
+def _probe_version(executable: Path, timeout: float) -> tuple[str | None, str]:
+    try:
+        proc = subprocess.run(
+            [str(executable), "--version"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+            shell=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return None, str(exc)
+    text = (proc.stdout or "") + (proc.stderr or "")
+    match = re.search(r"ngspice-[0-9][A-Za-z0-9.]*", text)
+    if match:
+        return match.group(0), None
+    return None, "no ngspice version banner in output"
+
+
+def _candidate_paths(target: str | Path) -> list[Path]:
+    path = Path(target)
+    if path.is_dir():
+        return [
+            path / "bin" / "ngspice_con.exe",
+            path / "ngspice_con.exe",
+            path / "bin" / "ngspice.exe",
+            path / "ngspice.exe",
+        ]
+    return [path]
+
+
+@functools.lru_cache(maxsize=8)
+def locate_engine(timeout: float = 10.0) -> dict:
+    """Find a runnable ngspice binary and report why it is unavailable if not.
+
+    When ``NGSPICE_BIN`` is set it is authoritative: an invalid value must not
+    silently fall back to a known installation (the browser acceptance case
+    B7(b) depends on being able to simulate a missing engine).
+    """
+    env = os.environ.get("NGSPICE_BIN")
+    if env:
+        candidates = _candidate_paths(env)
+        source = f"NGSPICE_BIN={env}"
+    else:
+        candidates = []
+        for name in ("ngspice_con.exe", "ngspice.exe", "ngspice"):
+            found = shutil.which(name)
+            if found:
+                candidates.append(Path(found))
+        candidates.extend(
+            [
+                Path(r"C:\Tools\ngspice-47\bin\ngspice_con.exe"),
+                Path(r"C:\Tools\ngspice-47\bin\ngspice.exe"),
+            ]
+        )
+        source = "PATH or C:\\Tools\\ngspice-47"
+
+    tried: list[str] = []
+    for candidate in candidates:
+        if not candidate.is_file():
+            tried.append(f"{candidate} (missing)")
+            continue
+        version, error = _probe_version(candidate, timeout)
+        if version:
+            return {
+                "available": True,
+                "path": str(candidate),
+                "version": version,
+                "source": source,
+                "error": None,
+            }
+        tried.append(f"{candidate}: {error}")
+
+    return {
+        "available": False,
+        "path": None,
+        "version": None,
+        "source": source,
+        "error": f"ngspice not found ({'; '.join(tried) or 'no candidates'})",
+    }
+
+
+def clear_engine_cache() -> None:
+    """Forget a cached engine lookup (used after changing NGSPICE_BIN)."""
+    locate_engine.cache_clear()
+
+
+def _tail(text: str, limit: int = TAIL_LINES) -> str:
+    return "\n".join(
+        [line for line in (text or "").splitlines() if line.strip()][-limit:]
+    )
+
+
+def _as_text(value: object) -> str:
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return value or ""
+
+
+def _write_meta(run_dir: Path, meta: dict) -> None:
+    (run_dir / "meta.json").write_text(
+        json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+
+
+def _prune_runs(runs_root: Path, keep: int = MAX_RUNS) -> None:
+    try:
+        dirs = sorted(
+            (path for path in runs_root.iterdir() if path.is_dir()),
+            key=lambda path: path.name,
+        )
+    except OSError:
+        return
+    for old in dirs[:-keep]:
+        shutil.rmtree(old, ignore_errors=True)
+
+
+def run_analysis(
+    circuit: dict,
+    analysis: str,
+    *,
+    runs_root: Path = RUNS_ROOT,
+    engine: dict | None = None,
+    timeout: float = 60.0,
+) -> dict:
+    """Run ngspice once and return data only when the run is fully valid."""
+    if analysis not in ANALYSES:
+        raise ValueError(f"Unknown analysis: {analysis!r}")
+    if engine is None:
+        engine = locate_engine()
+    engine = dict(engine)
+
+    started_at = datetime.now(timezone.utc)
+    clock = time.monotonic()
+    result: dict = {
+        "status": "failed",
+        "analysis": analysis,
+        "run_id": "",
+        "run_dir": "",
+        "netlist": "",
+        "command": [],
+        "returncode": None,
+        "duration_s": 0.0,
+        "engine": engine,
+        "model": _model_info(),
+        "data": {},
+        "warnings": [],
+        "stdout_tail": "",
+        "stderr_tail": "",
+    }
+
+    if not engine.get("available"):
+        result["status"] = "engine_missing"
+        result["stderr_tail"] = engine.get("error") or "ngspice not found"
+        return result
+
+    root = Path(runs_root)
+    root.mkdir(parents=True, exist_ok=True)
+    run_id = f"{started_at.strftime('%Y%m%dT%H%M%S')}-{secrets.token_hex(3)}"
+    run_dir = root / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    netlist = build_netlist(circuit, analysis)
+    (run_dir / "circuit.cir").write_text(netlist, encoding="utf-8")
+    command = [str(engine["path"]), "-b", "-o", "run.log", "circuit.cir"]
+    meta = {
+        "analysis": analysis,
+        "run_id": run_id,
+        "started_at": started_at.isoformat(),
+        "input": dict(circuit),
+        "engine": {"path": engine.get("path"), "version": engine.get("version")},
+        "model": result["model"],
+        "command": command,
+        "timeout_s": timeout,
+    }
+    _write_meta(run_dir, meta)
+    result.update(run_id=run_id, run_dir=str(run_dir), netlist=netlist, command=command)
+
+    status: str | None = None
+    returncode: int | None = None
+    stdout = ""
+    stderr = ""
+    try:
+        proc = subprocess.run(
+            command,
+            cwd=run_dir,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+            shell=False,
+        )
+        returncode = proc.returncode
+        stdout = _as_text(proc.stdout)
+        stderr = _as_text(proc.stderr)
+    except subprocess.TimeoutExpired as exc:
+        status = "timeout"
+        returncode = None
+        stdout = _as_text(exc.stdout)
+        stderr = (f"ngspice did not finish within {timeout:g} s\n"
+                  + _as_text(exc.stderr))
+    except OSError as exc:
+        status = "failed"
+        stderr = f"could not start ngspice at {engine.get('path')}: {exc}"
+
+    log_path = run_dir / "run.log"
+    log_text = (
+        log_path.read_text("utf-8", errors="replace") if log_path.is_file() else ""
+    )
+    result["stdout_tail"] = _tail(stdout)
+    result["stderr_tail"] = _tail("\n".join([stderr, log_text]))
+    result["returncode"] = returncode
+    result["duration_s"] = round(time.monotonic() - clock, 3)
+
+    if status is None:
+        if returncode != 0:
+            status = "failed"
+            result["stderr_tail"] = (
+                f"ngspice exited with code {returncode}\n" + result["stderr_tail"]
+            )
+        else:
+            result_path = run_dir / RESULT_FILES[analysis]
+            try:
+                size = result_path.stat().st_size
+            except OSError:
+                size = 0
+            if size == 0:
+                status = "parse_error"
+                result["stderr_tail"] += f"\nmissing or empty {RESULT_FILES[analysis]}"
+            elif size > MAX_RESULT_BYTES:
+                status = "parse_error"
+                result["stderr_tail"] += (
+                    f"\n{RESULT_FILES[analysis]} is larger than "
+                    f"{MAX_RESULT_BYTES} bytes"
+                )
+            else:
+                text = result_path.read_text("utf-8", errors="replace")
+                if len(text.splitlines()) > MAX_RESULT_LINES:
+                    status = "parse_error"
+                    result["stderr_tail"] += (
+                        f"\n{RESULT_FILES[analysis]} has more than "
+                        f"{MAX_RESULT_LINES} rows"
+                    )
+                else:
+                    try:
+                        data = PARSERS[analysis](text)
+                    except SpiceParseError as exc:
+                        status = "parse_error"
+                        result["stderr_tail"] += f"\n{exc}"
+                    else:
+                        status = "ok"
+                        result["data"] = data
+                        if analysis == "dc":
+                            ic_from_rc = (
+                                float(circuit["vcc"]) - data["v_c_v"]
+                            ) / float(circuit["rc"])
+                            if (
+                                abs(ic_from_rc - data["i_c_a"])
+                                > 0.02 * abs(data["i_c_a"])
+                            ):
+                                result["warnings"].append(
+                                    "IC cross-check differs from "
+                                    "(VCC - V(C)) / RC by more than 2%"
+                                )
+
+    result["status"] = status or "failed"
+    meta.update(
+        status=result["status"],
+        returncode=returncode,
+        duration_s=result["duration_s"],
+    )
+    _write_meta(run_dir, meta)
+    _prune_runs(root)
+    return result

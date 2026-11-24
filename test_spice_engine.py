@@ -1,6 +1,13 @@
 """Unit tests for the ngspice adapter (Lab 04)."""
 
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
 from bjt_bias import spice_engine
 
@@ -92,6 +99,69 @@ class TestParsers(unittest.TestCase):
     def test_non_increasing_sweep_raises(self):
         with self.assertRaises(spice_engine.SpiceParseError):
             spice_engine.parse_ac_safe("1000 5 180\n10 5 180\n")
+
+
+class TestRunContract(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.circuit = dict(spice_engine.CIRCUIT_DEFAULTS)
+
+    def test_engine_missing_status(self):
+        result = spice_engine.run_analysis(
+            self.circuit, "dc", runs_root=self.tmp,
+            engine={"available": False, "path": None, "version": None,
+                    "source": "none", "error": "ngspice not found"},
+        )
+        self.assertEqual(result["status"], "engine_missing")
+        self.assertEqual(result["data"], {})
+        self.assertIn("not found", result["stderr_tail"])
+
+    def test_bad_binary_reports_failed(self):
+        result = spice_engine.run_analysis(
+            self.circuit, "dc", runs_root=self.tmp,
+            engine={"available": True, "path": sys.executable, "version": "x",
+                    "source": "test", "error": None},
+            timeout=20,
+        )
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["data"], {})
+        self.assertNotEqual(result["returncode"], 0)
+
+    def test_timeout_reports_timeout(self):
+        with mock.patch("bjt_bias.spice_engine.subprocess.run",
+                        side_effect=subprocess.TimeoutExpired("ngspice", 1)):
+            result = spice_engine.run_analysis(
+                self.circuit, "dc", runs_root=self.tmp,
+                engine={"available": True, "path": "ngspice", "version": "x",
+                        "source": "test", "error": None}, timeout=1,
+            )
+        self.assertEqual(result["status"], "timeout")
+        self.assertEqual(result["data"], {})
+
+    def test_run_directory_holds_netlist_and_meta(self):
+        result = spice_engine.run_analysis(
+            self.circuit, "dc", runs_root=self.tmp,
+            engine={"available": True, "path": sys.executable, "version": "x",
+                    "source": "test", "error": None}, timeout=20,
+        )
+        run_dir = Path(result["run_dir"])
+        self.assertTrue((run_dir / "circuit.cir").is_file())
+        self.assertTrue((run_dir / "meta.json").is_file())
+        self.assertEqual(
+            json.loads((run_dir / "meta.json").read_text("utf-8"))["analysis"],
+            "dc",
+        )
+
+
+@unittest.skipUnless(spice_engine.locate_engine()["available"], "ngspice not installed")
+class TestRealEngine(unittest.TestCase):
+    def test_dc_run_matches_reference_within_twenty_percent(self):
+        result = spice_engine.run_analysis(dict(spice_engine.CIRCUIT_DEFAULTS), "dc")
+        self.assertEqual(result["status"], "ok")
+        data = result["data"]
+        self.assertAlmostEqual(data["i_c_a"], 1.45e-3, delta=0.3e-3)
+        self.assertGreater(data["v_ce_v"], 5.0)
 
 
 if __name__ == "__main__":

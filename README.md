@@ -102,8 +102,8 @@ CE Voltage Divider v1 ผลที่ได้แสดงคนละป้า�
 
 - **GitHub:** <https://github.com/pleng4995-cloud/Git-Lab.git>
 - **Commit SHA ของ Lab 04 (โค้ด + หลักฐาน):**
-  [`5394314`](https://github.com/pleng4995-cloud/Git-Lab/commit/53943142e62264851f325a401f3d8a2634543139)
-  (`53943142e62264851f325a401f3d8a2634543139`)
+  [`92bf24d`](https://github.com/pleng4995-cloud/Git-Lab/commit/92bf24d8cc3f9aff849fb19312da6710677fc642)
+  (`92bf24d8cc3f9aff849fb19312da6710677fc642`)
 - **ตารางตรวจรับ A1–A5 (Lab 03) และ B1–B8 (Lab 04) + หลักฐานจากหน้าเว็บ:**
   [`docs/validation.md`](docs/validation.md)
 - **กฎการแก้โค้ด/การส่งงาน:** [`AGENTS.md`](AGENTS.md)

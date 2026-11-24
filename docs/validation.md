@@ -210,6 +210,25 @@ excerpt ของ `op.txt` / `ac.txt` / `tran.txt` (`b2-op.txt`, `b4-ac.txt`,
 สคริปต์ถ่าย screenshot จาก DOM snapshot ของ **POST เดียวกัน** (ไม่ได้โพสต์ซ้ำ)
 จึงทำให้ run id ในตารางตรงกับสิ่งที่ปรากฏในภาพทุกครั้ง
 
+### ไฟล์ Simulation & Plots (รันใหม่ แยกจาก B4/B5)
+
+เพื่อให้เปิด/ส่งกราฟได้โดยตรง จึงรัน POST จริงอีกชุดผ่าน Flask `test_client()`
+ด้วย baseline เดียวกัน (ไม่ใช่ browser case และไม่ได้ hard-code curve) แล้วให้
+`bjt_bias/plots.py` สร้าง SVG จาก `ac.txt` / `tran.txt` ที่ ngspice เขียนจริง
+PNG ถูก render จาก SVG ชุดเดียวกันด้วย Edge headless (1200×900) ผลลัพธ์เป็น
+**run ใหม่** จึงไม่ใช้แทน run id ของ B4/B5 ในตารางด้านบน
+
+| ผล | run id | ไฟล์ที่ใช้ได้เลย | ค่าที่อ่านจากผลรันจริง |
+|---|---|---|---|
+| AC sweep (10 Hz–1 MHz, 20 pts/dec) | `20261124T180939-9172e2` | [SVG](evidence/lab4/simulation-ac.svg) · [PNG](evidence/lab4/simulation-ac.png) | 101 points · @1 kHz = **4.88959084 dB / −179.871168°** · chart max 4.89 dB, phase ±180° |
+| Transient (10 mV peak, 1 kHz) | `20261124T180940-eb14f0` | [SVG](evidence/lab4/simulation-tran.svg) · [PNG](evidence/lab4/simulation-tran.png) | 1008 points · Vin p-p = **19.999 mV** · Vout p-p = **35.116 mV** (charts max 17.6 mV / min −17.5 mV) |
+
+ตรวจแล้วว่า SVG ทั้งสอง parse เป็น XML ได้ มี label `Gain (dB)`, `Phase (deg)`,
+`Frequency (Hz)` และ `Time (ms)`, `Vin`, `Vout` พร้อม run id ตรงกับ `meta.json`
+(`status: ok`, `ngspice-47`, model SHA256 ตัวเดียวกับตารางสภาพแวดล้อม) และ PNG
+มีขนาด 1200×900 — ใช้ XML/DOM assertion เป็น proxy เท่านั้น ภาพยังต้องให้
+นักศึกษาดูด้วยตาในตาราง manual audit ด้านล่าง (AI ไม่ได้กรอกแทน)
+
 ## เครื่องมือตรวจ และเหตุผลที่ไม่ใช้ Playwright MCP / Impeccable
 
 ใช้ Microsoft Edge headless เพราะเครื่องนี้ไม่มี `node`/`npx` (ตรวจแล้วได้

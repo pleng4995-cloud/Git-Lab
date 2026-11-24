@@ -157,6 +157,12 @@ Vout = โหนด `out` หลัง Cout คร่อม RL
 JavaScript/dependency และไม่มี curve hard-code ทุก request ที่ status ไม่ใช่
 `ok` จะไม่มีค่าหรือกราฟ SPICE
 
+ตัวอย่างไฟล์กราฟจากการรันจริง (run ใหม่ แยกจาก B4/B5; รายละเอียดและ run id
+อยู่ใน [`docs/validation.md`](docs/validation.md#ไฟล์-simulation--plots-รันใหม่-แยกจาก-b4b5)):
+
+- [Bode — SVG](docs/evidence/lab4/simulation-ac.svg) · [PNG](docs/evidence/lab4/simulation-ac.png)
+- [Transient — SVG](docs/evidence/lab4/simulation-tran.svg) · [PNG](docs/evidence/lab4/simulation-tran.png)
+
 ### ตรวจซ้ำ
 
 ```powershell

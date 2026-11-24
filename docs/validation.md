@@ -151,7 +151,7 @@ VCE = 9.93178 − 1.89900 = 8.03278 V
 | Model SHA256 | `E3B36B89C491C09E24986692E556095403E3D4CCE1EEB1A71DA06DAEA3C5E589` |
 | Browser | Microsoft Edge `--headless=new` (`--dump-dom`, `--screenshot`) |
 | Repo | <https://github.com/pleng4995-cloud/Git-Lab.git> |
-| Commit ของ Lab 04 | [`c9011ab`](https://github.com/pleng4995-cloud/Git-Lab/commit/c9011abb74d51dd46ff7a508667dc6b032539523) (`c9011abb74d51dd46ff7a508667dc6b032539523`) |
+| Commit ของ Lab 04 | [`2c41279`](https://github.com/pleng4995-cloud/Git-Lab/commit/2c4127930ce498af9ddf1d6b5df4a55d722495a1) (`2c4127930ce498af9ddf1d6b5df4a55d722495a1`) |
 
 ที่มาของ model: ไม่มี Instructor Starter Kit ในเครื่องนี้ จึงใช้ 2N3904 model
 card ที่เผยแพร่สาธารณะ (ON Semiconductor / Motorola, `Is=6.734f`, `BF=416.4`,

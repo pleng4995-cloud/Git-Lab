@@ -169,6 +169,7 @@ JavaScript/dependency และไม่มี curve hard-code ทุก request
 .\.venv\Scripts\python.exe -m unittest discover
 .\.venv\Scripts\python.exe -m bjt_bias.app                      # ค้างไว้
 .\.venv\Scripts\python.exe scripts\browser_layout_check.py      # กันข้อความซ้อนใน SPICE source/sweep
+.\.venv\Scripts\python.exe scripts\browser_plot_text_check.py   # กันข้อความซ้อนในกราฟ AC/Transient
 .\.venv\Scripts\python.exe scripts\browser_acceptance_lab4.py   # B1–B8
 .\.venv\Scripts\python.exe scripts\browser_acceptance.py        # A1–A5 (Lab 03)
 ```
@@ -196,7 +197,8 @@ SHA256 `E3B36B89C491C09E24986692E556095403E3D4CCE1EEB1A71DA06DAEA3C5E589`
 - `bjt_bias/spice_models/2n3904.lib` + `README.md` — copy model card สาธารณะ
   (ไม่ได้ fit ให้ตรง analytical), บันทึก provenance
 - `scripts/fetch_ngspice.ps1`, `scripts/smoke_spice.py`,
-  `scripts/browser_acceptance_lab4.py`, `test_spice_engine.py`,
+  `scripts/browser_acceptance_lab4.py`, `scripts/browser_layout_check.py`,
+  `scripts/browser_plot_text_check.py`, `test_spice_engine.py`,
   `test_spice_app.py`, `test_plots.py`
 - `docs/evidence/lab4/`, ส่วน Lab 04 ใน `docs/validation.md`, `AGENTS.md`,
   และส่วนนี้ของ `README.md`

@@ -227,14 +227,21 @@ PNG ถูก render จาก SVG ชุดเดียวกันด้วย
 
 | ผล | run id | ไฟล์ที่ใช้ได้เลย | ค่าที่อ่านจากผลรันจริง |
 |---|---|---|---|
-| AC sweep (10 Hz–1 MHz, 20 pts/dec) | `20261124T180939-9172e2` | [SVG](evidence/lab4/simulation-ac.svg) · [PNG](evidence/lab4/simulation-ac.png) | 101 points · @1 kHz = **4.88959084 dB / −179.871168°** · chart max 4.89 dB, phase ±180° |
-| Transient (10 mV peak, 1 kHz) | `20261124T180940-eb14f0` | [SVG](evidence/lab4/simulation-tran.svg) · [PNG](evidence/lab4/simulation-tran.png) | 1008 points · Vin p-p = **19.999 mV** · Vout p-p = **35.116 mV** (charts max 17.6 mV / min −17.5 mV) |
+| AC sweep (10 Hz–1 MHz, 20 pts/dec) | `20261124T202916-14d8f4` | [SVG](evidence/lab4/simulation-ac.svg) · [PNG](evidence/lab4/simulation-ac.png) | 101 points · @1 kHz = **4.88959084 dB / −179.871168°** · chart max 4.89 dB, phase ±180° |
+| Transient (10 mV peak, 1 kHz) | `20261124T202917-6f3e5b` | [SVG](evidence/lab4/simulation-tran.svg) · [PNG](evidence/lab4/simulation-tran.png) | 1008 points · Vin p-p = **19.999 mV** · Vout p-p = **35.116 mV** (charts max 17.6 mV / min −17.5 mV) |
 
 ตรวจแล้วว่า SVG ทั้งสอง parse เป็น XML ได้ มี label `Gain (dB)`, `Phase (deg)`,
 `Frequency (Hz)` และ `Time (ms)`, `Vin`, `Vout` พร้อม run id ตรงกับ `meta.json`
 (`status: ok`, `ngspice-47`, model SHA256 ตัวเดียวกับตารางสภาพแวดล้อม) และ PNG
 มีขนาด 1200×900 — ใช้ XML/DOM assertion เป็น proxy เท่านั้น ภาพยังต้องให้
 นักศึกษาดูด้วยตาในตาราง manual audit ด้านล่าง (AI ไม่ได้กรอกแทน)
+
+ข้อความซ้อนในกราฟ AC ก่อนหน้านี้เกิดจาก label แกน Y อยู่ตำแหน่งเดียวกับ tick label
+(Edge render `4.8` ทับ `Gain (dB)` และ `0` ทับ `Phase (deg)`) แก้โดยทำ y-axis title
+ให้เป็นแนวตั้ง (`rotate(-90)`) ใน `bjt_bias/plots.py` แล้ว rebuild SVG/PNG ใหม่
+[`scripts/browser_plot_text_check.py`](../scripts/browser_plot_text_check.py)
+วัด bounding box ของ `<text>` จริงใน Edge: ก่อนแก้ **FAIL** (2 overlaps),
+หลังแก้ **PASS** (0 overlaps) — transient ใช้วิธีเดียวกันกับ `Voltage (mV)`
 
 ## เครื่องมือตรวจ และเหตุผลที่ไม่ใช้ Playwright MCP / Impeccable
 

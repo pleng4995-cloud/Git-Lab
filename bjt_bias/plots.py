@@ -84,6 +84,16 @@ def _text(x: float, y: float, value: str, *, anchor: str = "start", size: int = 
     )
 
 
+def _y_title(x: float, y: float, value: str) -> str:
+    """Vertical y-axis title, kept clear of the right-aligned tick labels."""
+    return (
+        f'<text x="{x:.2f}" y="{y:.2f}" text-anchor="middle" '
+        f'font-size="11" fill="#4b5563" '
+        f'transform="rotate(-90 {x:.2f} {y:.2f})">'
+        f"{html.escape(value)}</text>"
+    )
+
+
 def _decade_label(exponent: int) -> str:
     value = 10**exponent
     if value >= 1_000_000:
@@ -182,8 +192,8 @@ def bode_svg(
 
     parts.append(_path(drawn_x, drawn_gain, project_x, project_gain, "#dc2626"))
     parts.append(_path(drawn_x, drawn_phase, project_x, project_phase, "#2563eb"))
-    parts.append(_text(LEFT - 50, mag_top + mag_height / 2, "Gain (dB)"))
-    parts.append(_text(LEFT - 50, phase_top + phase_height / 2, "Phase (deg)"))
+    parts.append(_y_title(16, mag_top + mag_height / 2, "Gain (dB)"))
+    parts.append(_y_title(16, phase_top + phase_height / 2, "Phase (deg)"))
     parts.append(
         _text(
             LEFT + plot_width / 2,
@@ -276,7 +286,7 @@ def transient_svg(
 
     parts.append(_path(drawn_x, drawn_vin, project_x, project_y, "#0891b2", dashed=True))
     parts.append(_path(drawn_x, drawn_vout, project_x, project_y, "#dc2626"))
-    parts.append(_text(LEFT - 48, TOP + plot_height / 2, "Voltage (mV)"))
+    parts.append(_y_title(16, TOP + plot_height / 2, "Voltage (mV)"))
     parts.append(
         _text(LEFT + plot_width / 2, height - 8, "Time (ms)", anchor="middle", size=12)
     )

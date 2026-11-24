@@ -168,6 +168,7 @@ JavaScript/dependency และไม่มี curve hard-code ทุก request
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover
 .\.venv\Scripts\python.exe -m bjt_bias.app                      # ค้างไว้
+.\.venv\Scripts\python.exe scripts\browser_layout_check.py      # กันข้อความซ้อนใน SPICE source/sweep
 .\.venv\Scripts\python.exe scripts\browser_acceptance_lab4.py   # B1–B8
 .\.venv\Scripts\python.exe scripts\browser_acceptance.py        # A1–A5 (Lab 03)
 ```

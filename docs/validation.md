@@ -204,6 +204,13 @@ fCin  = 1 / (2π·Rin·Cin), Rin ≈ R1∥R2∥(rπ + (β+1)·RE)  (หลัก
 [`checks-b7b.txt`](evidence/lab4/checks-b7b.txt) วิธีจำลอง engine ไม่พร้อมคือ
 ตั้ง `NGSPICE_BIN` ให้ชี้ path ที่ไม่มี **ไม่ได้ปิด ngspice จริงทั้งเครื่อง**
 
+regression เพิ่มเติม: [`scripts/browser_layout_check.py`](../scripts/browser_layout_check.py)
+วัด `getBoundingClientRect()` ของ `.source-field` ใน Edge headless ก่อนแก้ที่
+1280×1400 พบ `0 input <> 1 label` และ `2 input <> 3 label` เพราะ input กว้าง
+132px ล้นคอลัมน์ที่กว้าง ~143px ภายใน `.source-group` แบบ 2 คอลัมน์ หลังเปลี่ยน
+`.source-field` เป็น `display:block` ผล **PASS ทั้ง 1280×1400 และ 390×900**
+(ไม่มี conflict/overflow) — เป็น DOM geometry proxy ภาพยังต้องให้นักศึกษาตรวจด้วยตา
+
 หลักฐานเพิ่มเติมใน `docs/evidence/lab4/`: netlist ที่รันจริง (`*-netlist.cir`),
 excerpt ของ `op.txt` / `ac.txt` / `tran.txt` (`b2-op.txt`, `b4-ac.txt`,
 `b5-tran.txt` ฯลฯ) และข้อความ error ของ B7 (`b7a-error.txt`, `b7b-error.txt`)

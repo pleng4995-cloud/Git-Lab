@@ -687,6 +687,13 @@ button:hover {
   font-weight: 700;
 }
 
+/* .field is a label + 132px input grid; inside the two-column source group
+   that grid is narrower than the fixed input, so the input overlaps the next
+   field's label. Stack the source fields instead. */
+.source-field {
+  display: block;
+}
+
 .source-field label {
   display: block;
   font-size: 12.5px;

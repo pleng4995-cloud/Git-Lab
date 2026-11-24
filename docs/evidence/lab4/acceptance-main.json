@@ -48,6 +48,7 @@
     "engine_version": null,
     "screenshot": "docs\\evidence\\lab4\\b1.png",
     "screenshot_exists": true,
+    "screenshot_source": "dom snapshot of this run (no second POST)",
     "parsed_values": {
       "VB": "1.942 V",
       "VE": "1.242 V",
@@ -107,6 +108,7 @@
     "engine_version": null,
     "screenshot": "docs\\evidence\\lab4\\b1-a2.png",
     "screenshot_exists": true,
+    "screenshot_source": "dom snapshot of this run (no second POST)",
     "parsed_values": {
       "VB": "0.700 V",
       "VE": "0.000 V",
@@ -166,6 +168,7 @@
     "engine_version": null,
     "screenshot": "docs\\evidence\\lab4\\b1-a3.png",
     "screenshot_exists": true,
+    "screenshot_source": "dom snapshot of this run (no second POST)",
     "parsed_values": {
       "VB": "1.737 V",
       "VE": "1.037 V",
@@ -225,6 +228,7 @@
     "engine_version": null,
     "screenshot": "docs\\evidence\\lab4\\b1-a4.png",
     "screenshot_exists": true,
+    "screenshot_source": "dom snapshot of this run (no second POST)",
     "parsed_values": {
       "VB": "2.599 V",
       "VE": "1.899 V",
@@ -303,7 +307,7 @@
         "-2.575 mA"
       ]
     },
-    "run_id": "20261124T173313-329026",
+    "run_id": "20261124T174238-ddc674",
     "engine_ok": true,
     "engine_bad": false,
     "spice_panel": true,
@@ -316,10 +320,11 @@
     "spice_error": "",
     "model_visible": true,
     "mode": null,
-    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T173313-329026",
+    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T174238-ddc674",
     "engine_version": "ngspice-47",
     "screenshot": "docs\\evidence\\lab4\\b2.png",
-    "screenshot_exists": true
+    "screenshot_exists": true,
+    "screenshot_source": "dom snapshot of this run (no second POST)"
   },
   "B3": {
     "results": [
@@ -389,7 +394,7 @@
         "-1.382 mA"
       ]
     },
-    "run_id": "20261124T173315-d7738c",
+    "run_id": "20261124T174239-d9342c",
     "engine_ok": true,
     "engine_bad": false,
     "spice_panel": true,
@@ -402,10 +407,11 @@
     "spice_error": "",
     "model_visible": true,
     "mode": null,
-    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T173315-d7738c",
+    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T174239-d9342c",
     "engine_version": "ngspice-47",
     "screenshot": "docs\\evidence\\lab4\\b3.png",
-    "screenshot_exists": true
+    "screenshot_exists": true,
+    "screenshot_source": "dom snapshot of this run (no second POST)"
   },
   "B4": {
     "results": [
@@ -439,7 +445,7 @@
       ]
     ],
     "compare": [],
-    "run_id": "20261124T173317-4abbab",
+    "run_id": "20261124T174241-a9d073",
     "engine_ok": true,
     "engine_bad": false,
     "spice_panel": true,
@@ -452,10 +458,11 @@
     "spice_error": "",
     "model_visible": true,
     "mode": null,
-    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T173317-4abbab",
+    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T174241-a9d073",
     "engine_version": "ngspice-47",
     "screenshot": "docs\\evidence\\lab4\\b4.png",
     "screenshot_exists": true,
+    "screenshot_source": "dom snapshot of this run (no second POST)",
     "ac_rows": 101
   },
   "B5": {
@@ -490,7 +497,7 @@
       ]
     ],
     "compare": [],
-    "run_id": "20261124T173318-a2928f",
+    "run_id": "20261124T174243-13be6c",
     "engine_ok": true,
     "engine_bad": false,
     "spice_panel": true,
@@ -503,10 +510,11 @@
     "spice_error": "",
     "model_visible": true,
     "mode": null,
-    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T173318-a2928f",
+    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T174243-13be6c",
     "engine_version": "ngspice-47",
     "screenshot": "docs\\evidence\\lab4\\b5.png",
     "screenshot_exists": true,
+    "screenshot_source": "dom snapshot of this run (no second POST)",
     "tran_rows": 1008,
     "vout_pp_v": 0.0351139824,
     "vin_vout_correlation": -1.0
@@ -543,7 +551,7 @@
       ]
     ],
     "compare": [],
-    "run_id": "20261124T173321-77db86",
+    "run_id": "20261124T174245-50c2b3",
     "engine_ok": true,
     "engine_bad": false,
     "spice_panel": true,
@@ -556,10 +564,11 @@
     "spice_error": "",
     "model_visible": true,
     "mode": null,
-    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T173321-77db86",
+    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T174245-50c2b3",
     "engine_version": "ngspice-47",
     "screenshot": "docs\\evidence\\lab4\\b6.png",
     "screenshot_exists": true,
+    "screenshot_source": "dom snapshot of this run (no second POST)",
     "tran_rows": 1008,
     "vout_pp_v": 0.0702278849,
     "vout_pp_before_v": 0.0351139824
@@ -585,7 +594,8 @@
     "run_dir": ".",
     "engine_version": null,
     "screenshot": "docs\\evidence\\lab4\\b7a.png",
-    "screenshot_exists": true
+    "screenshot_exists": true,
+    "screenshot_source": "dom snapshot of this run (no second POST)"
   },
   "B8-DESKTOP": {
     "results": [
@@ -619,7 +629,7 @@
       ]
     ],
     "compare": [],
-    "run_id": "20261124T173325-60be65",
+    "run_id": "20261124T174248-1be2f6",
     "engine_ok": true,
     "engine_bad": false,
     "spice_panel": true,
@@ -632,10 +642,11 @@
     "spice_error": "",
     "model_visible": true,
     "mode": null,
-    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T173325-60be65",
+    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T174248-1be2f6",
     "engine_version": "ngspice-47",
     "screenshot": "docs\\evidence\\lab4\\b8-desktop.png",
     "screenshot_exists": true,
+    "screenshot_source": "dom snapshot of this run (no second POST)",
     "ac_rows": 101
   },
   "B8-MOBILE": {
@@ -670,7 +681,7 @@
       ]
     ],
     "compare": [],
-    "run_id": "20261124T173327-fa7481",
+    "run_id": "20261124T174250-4f2564",
     "engine_ok": true,
     "engine_bad": false,
     "spice_panel": true,
@@ -683,10 +694,11 @@
     "spice_error": "",
     "model_visible": true,
     "mode": null,
-    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T173327-fa7481",
+    "run_dir": "C:\\Phatcharakan\\GitLab1\\runs\\20261124T174250-4f2564",
     "engine_version": "ngspice-47",
     "screenshot": "docs\\evidence\\lab4\\b8-mobile.png",
     "screenshot_exists": true,
+    "screenshot_source": "dom snapshot of this run (no second POST)",
     "ac_rows": 101
   }
 }

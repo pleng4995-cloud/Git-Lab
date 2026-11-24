@@ -119,6 +119,64 @@ def strip_tags(text: str) -> str:
     return re.sub(r"<[^>]+>", "", text).replace("&middot;", "·").strip()
 
 
+def screenshot_snapshot(dom: str, path: Path, base: str) -> Path:
+    """Save the rendered DOM so the screenshot needs no second POST/run.
+
+    Reloading the auto-submitting form for `--screenshot` would start a second
+    ngspice run whose run id differs from the one recorded in the JSON. Using
+    the dumped page keeps the screenshot and the recorded values on the same
+    run. The stylesheet is re-pointed at the live server (file:// cannot
+    resolve the app's absolute /static path).
+    """
+    html = dom.replace(
+        'href="/static/style.css"', f'href="{base}static/style.css"'
+    )
+    path.write_text(html, encoding="utf-8")
+    return path
+
+
+def save_run_artifacts(run_dir: Path, case_id: str) -> None:
+    """Copy the real netlist and data excerpts into the evidence directory."""
+    if not run_dir.is_dir():
+        return
+    name = case_id.lower()
+    netlist = run_dir / "circuit.cir"
+    if netlist.is_file():
+        (EVIDENCE / f"{name}-netlist.cir").write_text(
+            netlist.read_text(encoding="utf-8", errors="replace"),
+            encoding="utf-8",
+        )
+    for data_name in ("op.txt", "ac.txt", "tran.txt"):
+        source = run_dir / data_name
+        if not source.is_file():
+            continue
+        lines = source.read_text(
+            encoding="utf-8", errors="replace"
+        ).splitlines()
+        excerpt = lines[:12] + (["..."] + lines[-3:] if len(lines) > 15 else [])
+        (EVIDENCE / f"{name}-{data_name}").write_text(
+            f"# run {run_dir.name}: first {min(12, len(lines))} lines "
+            f"+ last {min(3, max(0, len(lines) - 12))} lines of {data_name}\n"
+            + "\n".join(excerpt) + "\n",
+            encoding="utf-8",
+        )
+
+
+def save_error_evidence(case_id: str, parsed: dict) -> None:
+    """Keep the browser-visible error text for the two B7 cases."""
+    text = "\n".join(
+        [
+            f"=== {case_id} browser error text ===",
+            parsed["spice_error"] or "\n".join(parsed["errors"]),
+            f"engine_ok={parsed['engine_ok']} engine_bad={parsed['engine_bad']}",
+            f"run_id={parsed['run_id']} plots={parsed['plot_count']}",
+        ]
+    )
+    (EVIDENCE / f"{case_id.lower()}-error.txt").write_text(
+        text + "\n", encoding="utf-8"
+    )
+
+
 _PROFILE_IDS = itertools.count()
 
 
@@ -282,15 +340,24 @@ def main() -> int:
         uri = html_path.as_uri()
         dom = get_dom(uri)
         parsed = parse(dom)
+        snapshot = screenshot_snapshot(
+            dom, TMP / f"lab4_{case_id}_snapshot.html", base
+        )
         shot = EVIDENCE / f"{case_id.lower()}.png"
-        run_edge([f"--screenshot={shot}", f"--window-size={window}", uri])
+        run_edge([
+            f"--screenshot={shot}", f"--window-size={window}", snapshot.as_uri()
+        ])
         run_dir, meta = run_data(parsed["run_id"])
         parsed["run_dir"] = str(run_dir)
         parsed["engine_version"] = (meta.get("engine") or {}).get("version")
         parsed["screenshot"] = str(shot.relative_to(ROOT))
         parsed["screenshot_exists"] = shot.is_file()
+        parsed["screenshot_source"] = "dom snapshot of this run (no second POST)"
         summary[case_id] = parsed
         check(checks, shot.is_file(), f"{case_id} screenshot saved")
+        save_run_artifacts(run_dir, case_id)
+        if case_id in ("B7A", "B7B"):
+            save_error_evidence(case_id, parsed)
 
         if case_id in B1_ANALYTICAL:
             values = {row[0]: row[1] for row in parsed["results"]}

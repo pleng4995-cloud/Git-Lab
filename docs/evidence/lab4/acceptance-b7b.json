@@ -47,6 +47,7 @@
     "run_dir": ".",
     "engine_version": null,
     "screenshot": "docs\\evidence\\lab4\\b7b.png",
-    "screenshot_exists": true
+    "screenshot_exists": true,
+    "screenshot_source": "dom snapshot of this run (no second POST)"
   }
 }

@@ -1,0 +1,4 @@
+=== B7A browser error text ===
+RE must be a finite number greater than zero.
+engine_ok=True engine_bad=False
+run_id=None plots=0

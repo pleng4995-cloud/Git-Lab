@@ -1,0 +1,6 @@
+=== B7B browser error text ===
+ngspice not found
+      ngspice not found (C:\does-not-exist\ngspice.exe (missing))
+      No SPICE values or plots are shown for this run.
+engine_ok=False engine_bad=True
+run_id=None plots=0

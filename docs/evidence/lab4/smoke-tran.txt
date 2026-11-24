@@ -1,0 +1,53 @@
+# ngspice smoke run — tran
+generated: 2026-11-24T17:06:43Z
+engine: C:\Tools\ngspice-47\bin\ngspice_con.exe
+version: ** ngspice-47 : Circuit level simulation program
+netlist: CE voltage-divider v1, VCC=12, R1=100k, R2=22k, RC=2.2k,
+         RE=1k, RL=10k, CIN=COUT=10u, VIN SIN(0 10m 1k) AC 1
+
+note: `set wr_singlescale` is required. Without it ngspice writes
+      (scale, value) pairs: op=12 cols, ac=4, tran=4.
+note: the XSPICE `../lib/ngspice/xtradev.cm` warning is emitted because
+      the run directory has no sibling lib/ tree; this circuit uses no
+      XSPICE code models and the run exits 0 with valid data.
+
+=== tran ===
+command: ['C:\\Tools\\ngspice-47\\bin\\ngspice_con.exe', '-b', '-o', 'run.log', 'circuit.cir']
+exit=0
+stdout tail:
+  ** Compiled with KLU Direct Linear Solver
+  ** The U. C. Berkeley CAD Group
+  ** Copyright 1985-1994, Regents of the University of California.
+  ** Copyright 2001-2026, The ngspice team.
+  ** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html
+  ** Please file your bug-reports at https://ngspice.sourceforge.io/bugrep.html
+  ** Creation Date: Aug 11 2026   13:55:25
+  ******
+  Batch mode
+  Comments and warnings go to log-file: run.log
+run.log tail:
+  vcc                                         12
+  base                                   2.00367
+  coll                                   9.08722
+  emit                                   1.33288
+  vin                                          0
+  out                                          0
+  vin#branch                                   0
+  vcc#branch                         -0.00142396
+  No. of Data Rows : 1008
+  Note: Simulation executed from .control section 
+tran.txt: 1008 data rows
+column widths seen: [3]
+  first 3 row(s):
+    [3 cols]  0.00000000e+00  0.00000000e+00  0.00000000e+00 
+    [3 cols]  5.00000000e-08  3.14159260e-06 -6.96107868e-06 
+    [3 cols]  1.00000000e-07  6.28318489e-06 -1.19820732e-05 
+  last 3 row(s):
+    [3 cols]  4.99140000e-03 -5.40091018e-04  9.45398775e-04 
+    [3 cols]  4.99570000e-03 -2.70144100e-04  4.71376595e-04 
+    [3 cols]  5.00000000e-03 -1.22464680e-17 -2.95769213e-06 
+
+SMOKE RESULT: PASS (0 failure(s))
+
+observed column widths for this analysis: [3]
+result: PASS

@@ -1,0 +1,47 @@
+# ngspice smoke run — op
+generated: 2026-11-24T17:06:43Z
+engine: C:\Tools\ngspice-47\bin\ngspice_con.exe
+version: ** ngspice-47 : Circuit level simulation program
+netlist: CE voltage-divider v1, VCC=12, R1=100k, R2=22k, RC=2.2k,
+         RE=1k, RL=10k, CIN=COUT=10u, VIN SIN(0 10m 1k) AC 1
+
+note: `set wr_singlescale` is required. Without it ngspice writes
+      (scale, value) pairs: op=12 cols, ac=4, tran=4.
+note: the XSPICE `../lib/ngspice/xtradev.cm` warning is emitted because
+      the run directory has no sibling lib/ tree; this circuit uses no
+      XSPICE code models and the run exits 0 with valid data.
+
+=== op ===
+command: ['C:\\Tools\\ngspice-47\\bin\\ngspice_con.exe', '-b', '-o', 'run.log', 'circuit.cir']
+exit=0
+stdout tail:
+  ** Compiled with KLU Direct Linear Solver
+  ** The U. C. Berkeley CAD Group
+  ** Copyright 1985-1994, Regents of the University of California.
+  ** Copyright 2001-2026, The ngspice team.
+  ** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html
+  ** Please file your bug-reports at https://ngspice.sourceforge.io/bugrep.html
+  ** Creation Date: Aug 11 2026   13:55:25
+  ******
+  Batch mode
+  Comments and warnings go to log-file: run.log
+run.log tail:
+  Error opening code model "../lib/ngspice/xtradev.cm": No such file or directory!
+  Error: Library ../lib/ngspice/xtradev.cm couldn't be loaded!
+  Warning: code models like ../lib/ngspice/xtradev.cm have not been loaded successfully.
+      Any of the following steps may fail, if code models are involved!.
+  Note: No compatibility mode selected!
+  Circuit: * ce voltage-divider amplifier v1 (lab 04 smoke run)
+  Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+  Using SPARSE 1.3 as Direct Linear Solver
+  No. of Data Rows : 1
+  Note: Simulation executed from .control section 
+op.txt: 1 data rows
+column widths seen: [7]
+  first 1 row(s):
+    [7 cols]  1.20000000e+01  2.00367450e+00  1.33287974e+00  9.08721626e+00  1.32403477e-03  8.88736584e-06 -1.33292214e-03 
+  last 1 row(s):
+    [7 cols]  1.20000000e+01  2.00367450e+00  1.33287974e+00  9.08721626e+00  1.32403477e-03  8.88736584e-06 -1.33292214e-03 
+
+observed column widths for this analysis: [7]
+result: PASS

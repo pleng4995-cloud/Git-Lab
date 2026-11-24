@@ -56,5 +56,43 @@ class TestNetlist(unittest.TestCase):
             spice_engine.build_netlist(self.circuit(), "noise")
 
 
+OP_OK = "0\t2.101\t1.452\t8.806\t0.00145\t0.00342\t0.00146\n"
+AC_OK = "1.000000e+01\t4.9\t178.2\n1.000000e+03\t5.1\t179.0\n"
+TRAN_OK = "0.000000e+00\t0.0\t0.0\n1.000000e-06\t0.0006\t-0.0011\n"
+
+
+class TestParsers(unittest.TestCase):
+    def test_op_values(self):
+        data = spice_engine.parse_op(OP_OK)
+        self.assertAlmostEqual(data["v_b_v"], 2.101)
+        self.assertAlmostEqual(data["v_ce_v"], 8.806 - 1.452)
+        self.assertAlmostEqual(data["i_c_a"], 0.00145)
+
+    def test_ac_arrays(self):
+        data = spice_engine.parse_ac(AC_OK)
+        self.assertEqual(data["freq_hz"], [10.0, 1000.0])
+        self.assertEqual(data["gain_db"], [4.9, 5.1])
+        self.assertEqual(data["phase_deg"], [178.2, 179.0])
+
+    def test_tran_arrays(self):
+        data = spice_engine.parse_tran(TRAN_OK)
+        self.assertEqual(len(data["time_s"]), 2)
+        self.assertEqual(data["vout_v"][1], -0.0011)
+
+    def test_wrong_column_count_raises(self):
+        with self.assertRaises(spice_engine.SpiceParseError):
+            spice_engine.parse_ac_safe("10 4.9\n")
+
+    def test_nan_and_empty_raise(self):
+        for bad in ("", "nan nan nan\n", "abc def ghi\n"):
+            with self.subTest(bad=bad):
+                with self.assertRaises(spice_engine.SpiceParseError):
+                    spice_engine.parse_ac_safe(bad)
+
+    def test_non_increasing_sweep_raises(self):
+        with self.assertRaises(spice_engine.SpiceParseError):
+            spice_engine.parse_ac_safe("1000 5 180\n10 5 180\n")
+
+
 if __name__ == "__main__":
     unittest.main()

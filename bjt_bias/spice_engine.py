@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 MODEL_NAME = "2N3904"
@@ -103,3 +104,112 @@ def build_netlist(
 
     lines.extend([".endc", ".end", ""])
     return "\n".join(lines)
+
+
+class SpiceParseError(ValueError):
+    """Raised when an ngspice result file does not match the expected layout."""
+
+
+def _rows(text: str) -> list[list[float]]:
+    """Parse whitespace-separated numeric rows, skipping blank/comment lines."""
+    rows: list[list[float]] = []
+    for lineno, line in enumerate(text.splitlines(), start=1):
+        stripped = line.strip()
+        if not stripped or stripped[0] in "*#":
+            continue
+        try:
+            values = [float(token) for token in stripped.split()]
+        except ValueError as exc:
+            raise SpiceParseError(
+                f"line {lineno}: expected numeric columns, saw {stripped!r}"
+            ) from exc
+        if not all(math.isfinite(value) for value in values):
+            raise SpiceParseError(f"line {lineno}: non-finite value in {stripped!r}")
+        rows.append(values)
+    return rows
+
+
+def parse_op(text: str) -> dict:
+    """Parse the single-row ``op.txt`` produced by ``set wr_singlescale``."""
+    rows = _rows(text)
+    if not rows:
+        raise SpiceParseError("op.txt contains no data rows")
+    row = rows[0]
+    if len(row) == 7:  # scale column + 6 requested vectors
+        values = row[1:]
+    elif len(row) == 6:
+        values = row
+    else:
+        raise SpiceParseError(f"expected 6 values per row, saw {len(row)}")
+    v_b, v_e, v_c, i_c, i_b, i_e = values
+    return {
+        "v_b_v": v_b,
+        "v_e_v": v_e,
+        "v_c_v": v_c,
+        "v_ce_v": v_c - v_e,
+        "i_b_a": i_b,
+        "i_c_a": i_c,
+        "i_e_a": i_e,
+    }
+
+
+def parse_ac(text: str) -> dict:
+    """Parse ``ac.txt``: frequency (Hz), gain (dB), phase (deg)."""
+    freq: list[float] = []
+    gain: list[float] = []
+    phase: list[float] = []
+    for lineno, row in enumerate(_rows(text), start=1):
+        if len(row) != 3:
+            raise SpiceParseError(
+                f"line {lineno}: expected 3 values per row, saw {len(row)}"
+            )
+        freq.append(row[0])
+        gain.append(row[1])
+        phase.append(row[2])
+    return {"freq_hz": freq, "gain_db": gain, "phase_deg": phase}
+
+
+def parse_tran(text: str) -> dict:
+    """Parse ``tran.txt``: time (s), vin (V), vout (V)."""
+    time: list[float] = []
+    vin: list[float] = []
+    vout: list[float] = []
+    for lineno, row in enumerate(_rows(text), start=1):
+        if len(row) != 3:
+            raise SpiceParseError(
+                f"line {lineno}: expected 3 values per row, saw {len(row)}"
+            )
+        time.append(row[0])
+        vin.append(row[1])
+        vout.append(row[2])
+    return {"time_s": time, "vin_v": vin, "vout_v": vout}
+
+
+def _check_increasing(values: list[float], label: str) -> None:
+    for index, (before, after) in enumerate(zip(values, values[1:]), start=2):
+        if after <= before:
+            raise SpiceParseError(
+                f"{label} is not increasing at row {index}: {after} <= {before}"
+            )
+
+
+def parse_ac_safe(text: str) -> dict:
+    """Parse an AC sweep with the minimum-row and monotonic-sweep guarantees."""
+    data = parse_ac(text)
+    count = len(data["freq_hz"])
+    if count < 10:
+        raise SpiceParseError(f"ac sweep has only {count} rows (need at least 10)")
+    _check_increasing(data["freq_hz"], "ac frequency")
+    return data
+
+
+def parse_tran_safe(text: str) -> dict:
+    """Parse a transient run with the minimum-row and monotonic-time guarantees."""
+    data = parse_tran(text)
+    count = len(data["time_s"])
+    if count < 100:
+        raise SpiceParseError(
+            f"transient run has only {count} rows (need at least 100)"
+        )
+    _check_increasing(data["time_s"], "transient time")
+    return data
